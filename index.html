@@ -577,7 +577,10 @@ body::before {
   </div>
   <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
     <div class="rules-box" id="rules-text"></div>
-    <button class="btn btn-primary" id="rules-play-btn">¡Empezar ! 🚀</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" id="rules-restart-btn" style="flex:1;display:none;background:var(--bg);border-color:var(--border)">Reiniciar</button>
+      <button class="btn btn-primary" id="rules-play-btn" style="flex:2">¡Empezar ! 🚀</button>
+    </div>
   </div>
 </div>
 
@@ -652,19 +655,36 @@ function pickItems(gameId, pool, n) {
   const fresh = pool.map((_,i) => i).filter(i => !used.has(i));
   const old   = pool.map((_,i) => i).filter(i => used.has(i));
   shuffleArr(fresh); shuffleArr(old);
-  const maxRepeat = Math.ceil(n * 0.2);
-  const picked = [...fresh.slice(0, n), ...old.slice(0, Math.max(0, n - fresh.length))];
-  // enforce 20% cap on repeats
-  const repeats = picked.filter(i => used.has(i));
-  let final;
-  if (repeats.length <= maxRepeat) {
-    final = picked.slice(0, n);
+  
+  let available = [...fresh, ...old];
+  let final = [];
+  
+  if (pool.length >= n) {
+      const maxRepeat = Math.ceil(n * 0.2);
+      const picked = [...fresh.slice(0, n), ...old.slice(0, Math.max(0, n - fresh.length))];
+      const repeats = picked.filter(i => used.has(i));
+      if (repeats.length <= maxRepeat) {
+        final = picked.slice(0, n);
+      } else {
+        const nonRep = picked.filter(i => !used.has(i));
+        const repSlice = repeats.slice(0, maxRepeat);
+        final = shuffleArr([...nonRep.slice(0, n - maxRepeat), ...repSlice]).slice(0, n);
+      }
+      if (final.length < n) {
+         let needed = n - final.length;
+         let extras = available.filter(x => !final.includes(x));
+         final.push(...extras.slice(0, needed));
+         if (final.length < n) final = [...final, ...available.slice(0, n - final.length)];
+      }
   } else {
-    const nonRep = picked.filter(i => !used.has(i));
-    const repSlice = repeats.slice(0, maxRepeat);
-    final = shuffleArr([...nonRep.slice(0, n - maxRepeat), ...repSlice]).slice(0, n);
+      while (final.length < n) {
+          let batch = [...available];
+          shuffleArr(batch);
+          final.push(...batch.slice(0, n - final.length));
+      }
   }
-  saveUsedIdx(gameId, final);
+  
+  saveUsedIdx(gameId, final.slice(-pool.length));
   return final.map(i => pool[i]);
 }
 
@@ -1247,16 +1267,26 @@ const GDATA = {
     type: 'photo-spell',
     rules: '<strong>¿Cómo jugar?</strong><br>Observa el emoji y escribe la palabra en francés letra a letra.<br><br>💡 Tienes <strong>3 pistas</strong> por palabra. Cuidado con los acentos y las letras dobles.',
     items: [
-      { emoji:'🍎', answer:'pomme',       hints:['Fruit rouge ou vert très croquant','En espagnol: manzana','Empieza por P, 5 letras...'] },
-      { emoji:'🍞', answer:'pain',        hints:['Aliment fait de farine et d\'eau cuit au four','En espagnol: pan','Empieza por P, 4 letras...'] },
-      { emoji:'🥛', answer:'lait',        hints:['Boisson blanche produite par les vaches','En espagnol: leche','Empieza por L, 4 letras...'] },
-      { emoji:'🧀', answer:'fromage',     hints:['Produit laitier souvent jaune ou blanc','En espagnol: queso','Empieza por F, 7 letras...'] },
-      { emoji:'🥄', answer:'cuillère',    hints:['Ustensile pour manger la soupe','En espagnol: cuchara','Attention aux 2 L de ce mot !'] },
-      { emoji:'🍴', answer:'fourchette',  hints:['Ustensile avec des dents pour piquer la viande','En espagnol: tenedor','Empieza por F, 10 letras...'] },
-      { emoji:'🍽️', answer:'assiette',    hints:['Récipient plat où l\'on met la nourriture pour manger','En espagnol: plato','Attention: double S !'] },
-      { emoji:'🍳', answer:'poêle',       hints:['Ustensile de cuisine pour faire frire les œufs','En espagnol: sartén','Empieza por P, 5 lettres, avec un accent circonflexe sur le o et un e ! ... p-o-ê-l-e'] },
-      { emoji:'🥕', answer:'carotte',     hints:['Légume de couleur orange que les lapins adorent','En espagnol: zanahoria','Attention: double T !'] },
-      { emoji:'🥦', answer:'brocoli',     hints:['Légume vert qui ressemble à un petit arbre','En espagnol: brócoli','Empieza por B, 7 letras...'] }
+      { emoji:'🍎', answer:'pomme',       hints:['Fruit rouge ou vert très croquant','En espagnol: manzana','Empieza por P, 5 letras...'], mnemonic:'Piensa en el "pomo" rojo y redondo de una puerta.' },
+      { emoji:'🍞', answer:'pain',        hints:['Aliment fait de farine et d\'eau cuit au four','En espagnol: pan','Empieza por P, 4 letras...'], mnemonic:'El "pan" francés lleva una "i" escondida.' },
+      { emoji:'🥛', answer:'lait',        hints:['Boisson blanche produite par les vaches','En espagnol: leche','Empieza por L, 4 letras...'], mnemonic:'Piensa en un café "Latte", pero terminado en T.' },
+      { emoji:'🧀', answer:'fromage',     hints:['Produit laitier souvent jaune ou blanc','En espagnol: queso','Empieza por F, 7 letras...'], mnemonic:'El queso fresco coge buena "forma" (fromage).' },
+      { emoji:'🥄', answer:'cuillère',    hints:['Ustensile pour manger la soupe','En espagnol: cuchara','Attention aux 2 L de ce mot !'], mnemonic:'Suena a cuchara, pero tiene dos palitos (LL) para remover.' },
+      { emoji:'🍴', answer:'fourchette',  hints:['Ustensile avec des dents pour piquer la viande','En espagnol: tenedor','Empieza por F, 10 letras...'], mnemonic:'Un tenedor pincha la comida como una "horca" (fourche).' },
+      { emoji:'🍽️', answer:'assiette',    hints:['Récipient plat où l\'on met la nourriture pour manger','En espagnol: plato','Attention: double S !'], mnemonic:'El plato está bien "asentado" (assiette) en la mesa.' },
+      { emoji:'🍳', answer:'poêle',       hints:['Ustensile de cuisine pour faire frire les œufs','En espagnol: sartén','Empieza por P, 5 lettres, avec un accent circonflexe sur le o et un e ! ... p-o-ê-l-e'], mnemonic:'La sartén donde haces la "paella" (poêle).' },
+      { emoji:'🥕', answer:'carotte',     hints:['Légume de couleur orange que les lapins adorent','En espagnol: zanahoria','Attention: double T !'], mnemonic:'Como en inglés (carrot), añadiendo -te al final.' },
+      { emoji:'🥦', answer:'brocoli',     hints:['Légume vert qui ressemble à un petit arbre','En espagnol: brócoli','Empieza por B, 7 letras...'], mnemonic:'¡Se escribe exactamente igual que en español pero sin tilde!' },
+      { emoji:'🍓', answer:'fraise',      hints:['Petit fruit rouge à graines extérieures','En espagnol: fresa','Empieza por F, 6 letras...'], mnemonic:'Es casi igual a "fresa", solo metes una i en el centro.' },
+      { emoji:'🔪', answer:'couteau',     hints:['Ustensile pointu pour couper la viande','En espagnol: cuchillo','Empieza por C, 7 letras...'], mnemonic:'Un buen cuchillo da un buen "corte" (-couteau).' },
+      { emoji:'🥛', answer:'verre',       hints:['A l\'intérieur on y met de l\'eau pour la boire','En espagnol: vaso','Empieza por V, 5 lettres...'], mnemonic:'A través del cristal del vaso puedes "ver" (verre).' },
+      { emoji:'🍋', answer:'citron',      hints:['Fruit jaune très acide','En espagnol: limón','Empieza por C, 6 letras...'], mnemonic:'Suena a la palabra "cítrico", ¡igual que lo es el limón!' },
+      { emoji:'🥗', answer:'salade',      hints:['Plat froid de légumes verts','En espagnol: ensalada','Empieza por S, 6 letras...'], mnemonic:'Ensalada en español... ¡Salade en francés!' },
+      { emoji:'🍊', answer:'orange',      hints:['Agrume rond de même couleur que son nom','En espagnol: naranja','Empieza por O, 6 letras...'], mnemonic:'¡Se escribe idéntico que en inglés "orange"!' },
+      { emoji:'🍇', answer:'raisin',      hints:['Petit fruit en grappe qui sert à faire du vin','En espagnol: uva','Empieza por R, 6 letras...'], mnemonic:'¿Conoces las "pasas" (raisins sec)? Viene de la misma uva.' },
+      { emoji:'🧅', answer:'oignon',      hints:['Légume qui fait pleurer quand on le coupe','En espagnol: cebolla','Attention ! Commence par oi-gn-...'], mnemonic:'La planta que te hace llorar como a un "ogro" (oignon).' },
+      { emoji:'🧄', answer:'ail',         hints:['Condiment qui sent fort et éloigne les vampires','En espagnol: ajo','Seulement 3 lettres ! A-I-L'], mnemonic:'Un "¡Ay!" (ail) de cuando te pica un vampiro.' },
+      { emoji:'☕', answer:'tasse',       hints:['On l\'utilise pour boire le café chaud','En espagnol: taza','Attention : double S !'], mnemonic:'Literalmente "taza" pero escrita con "ss".' }
     ]
   },
 
@@ -1268,19 +1298,26 @@ const GDATA = {
     type: 'swipe',
     rules: '<strong>¿Cómo jugar?</strong><br>Lee la frase. Si expresa gusto, placer o ganas de comer, pulsa <strong>👍 J\'aime</strong>. Si expresa problemas, restricciones o asco, pulsa <strong>👎 Je n\'aime pas</strong>.',
     items: [
-      { text:'C\'est trop bon !',                  cat:1, note:'¡Está buenísimo!' },
-      { text:'Je me régale.',                      cat:1, note:'¡Me lo estoy gozando! (comer)' },
-      { text:'J\'ai un faible pour la brioche.',   cat:1, note:'Siento debilidad por el brioche.' },
-      { text:'Ma préférée, c\'est la tarte...',   cat:1, note:'Mi favorita es...' },
-      { text:'Ça sent bon l\'été !',               cat:1, note:'¡Huele a verano!' },
-      { text:'J\'adore l\'odeur du pain perdu.',   cat:1, note:'Me encanta el olor de las torrijas.' },
-      { text:'Remplir son assiette c\'est chouette !', cat:1, note:'¡Llenar el plato mola!' },
-      { text:'Je suis allergique au lait.',        cat:0, note:'Soy alérgico a la leche.' },
-      { text:'Je suis intolérant au gluten.',      cat:0, note:'Soy intolerante al gluten.' },
-      { text:'Je n\'aime pas les plats qui piquent.',cat:0, note:'No me gustan los platos que pican.' },
-      { text:'Je ne peux pas manger de crevettes.',cat:0, note:'No puedo comer gambas.' },
-      { text:'Je déteste les lentilles !',         cat:0, note:'¡Odio las lentejas!' },
-      { text:'C\'est pas terrible...',             cat:0, note:'No es gran cosa...' }
+      { text:'C\'est trop bon !',                  cat:1, note:'¡Está buenísimo!', mnemonic:'La palabra "bon" (bueno) siempre es positiva.' },
+      { text:'Je me régale.',                      cat:1, note:'¡Me lo estoy gozando! (comer)', mnemonic:'"Régale" suena a regalo. ¡Cuando comes rico, es un regalo!' },
+      { text:'J\'ai un faible pour la brioche.',   cat:1, note:'Siento debilidad por el brioche.', mnemonic:'Tener un "faible" es una debilidad, no te puedes resistir a comerlo.' },
+      { text:'Ma préférée, c\'est la tarte...',   cat:1, note:'Mi favorita es...', mnemonic:'"Préférée" es literalmente tu cosa preferida. Nada puede ir mal ahí.' },
+      { text:'Ça sent bon l\'été !',               cat:1, note:'¡Huele a verano!', mnemonic:'"Sent bon" significa que huele muy rico.' },
+      { text:'J\'adore l\'odeur du pain perdu.',   cat:1, note:'Me encanta el olor de las torrijas.', mnemonic:'El verbo "adorer" te da la pista. ¡Es súper positivo!' },
+      { text:'Remplir son assiette c\'est chouette !', cat:1, note:'¡Llenar el plato mola!', mnemonic:'"Chouette" significa algo guay o genial en francés.' },
+      { text:'Je suis allergique au lait.',        cat:0, note:'Soy alérgico a la leche.', mnemonic:'Si eres "allergique", tu cuerpo rechaza el alimento.' },
+      { text:'Je suis intolérant au gluten.',      cat:0, note:'Soy intolerante al gluten.', mnemonic:'Como en español, ser intolerante es una afección o restricción alimenticia.' },
+      { text:'Je n\'aime pas les plats qui piquent.',cat:0, note:'No me gustan los platos que pican.', mnemonic:'Lleva la negación de gustar ("N\'aime pas"). Evitar el dolor = restricción.' },
+      { text:'Je ne peux pas manger de crevettes.',cat:0, note:'No puedo comer gambas.', mnemonic:'Lleva la negación "ne peux pas" (no puedo).' },
+      { text:'Je déteste les lentilles !',         cat:0, note:'¡Odio las lentejas!', mnemonic:'El verbo "détester" (odiar) es la palabra clave negativa.' },
+      { text:'C\'est pas terrible...',             cat:0, note:'No es gran cosa...', mnemonic:'En francés que algo sea "pas terrible" no quiere decir que no sea terrible, ¡significa que es mediocre o no está rico!' },
+      { text:'Je n\'en veux plus.',                cat:0, note:'Ya no quiero más.', mnemonic:'Lleva la negación "ne... plus" (ya no más). Estás rechazando.' },
+      { text:'Ça ouvre l\'appétit !',              cat:1, note:'¡Abre el apetito!', mnemonic:'Abrir el apetito significa que pinta fenomenal y tienes muchas ganas de comerlo.' },
+      { text:'Il m\'arrive de jeter de la nourriture.', cat:0, note:'Me pasa que tiro comida.', mnemonic:'"Jeter" es tirar a la basura. Tirar comida es algo muy negativo.' },
+      { text:'Je vais me resservir.',              cat:1, note:'Voy a servirme más.', mnemonic:'"Resservir" es repetir plato o servirse de nuevo. Sólo haces eso si estaba de escándalo.' },
+      { text:'C\'est pas bon du tout.',            cat:0, note:'No está nada bueno.', mnemonic:'Lleva "pas bon" (no bueno). Directo y claro para no equivocarse.' },
+      { text:'Je n\'ai plus faim.',                cat:0, note:'Ya no tengo hambre.', mnemonic:'Negación "ne plus" (ya no más). Fin de la comida.' },
+      { text:'Je mangerais la même chose demain !',cat:1, note:'¡Comería lo mismo mañana!', mnemonic:'Estar dispuesto a repetir plato mañana es la máxima aprobación.' }
     ]
   },
 
@@ -1319,9 +1356,51 @@ const GDATA = {
       { emoji:'🤏', text:'Una pequeña cantidad...',
         hint:'"Il suffit d\'ajouter un ______ de sel." (un poco de)',
         answer:'peu', options:['peu','kilo','sachet','pot'] },
-      { emoji:'🥛', text:'Volumen líquido...',
+      { emoji:'📍', text:'Volume de liquide',
         hint:'"Mélangez le tout avec 1 ______ de lait." (litro)',
-        answer:'litre', options:['kilo','litre','tranche','gousse'] }
+        answer:'litre', options:['kilo','litre','tranche','gousse'] },
+      { emoji:'🍖', text:'Plus de charcuterie...',
+        hint:'"Peux-tu acheter 4 ______ de saucisson ?" (lonchas)',
+        answer:'tranches', options:['tranches','pots','kilos','boîtes'] },
+      { emoji:'🍯', text:'Un peu de miel...',
+        hint:'"Ajoute un ______ de miel dans ton thé." (un poco de)',
+        answer:'peu', options:['kilo','litre','peu','pot'] },
+      { emoji:'🧄', text:'Répétition ail...',
+        hint:'"J\'ai écrasé une ______ d\'ail." (diente de)',
+        answer:'gousse', options:['gousse','bouteille','tranche','boîte'] },
+      { emoji:'🍶', text:'Laitage...',
+        hint:'"Mange un ______ de yaourt au dessert." (bote/tarro)',
+        answer:'pot', options:['sachet','pot','kilo','tranche'] },
+      { emoji:'🧂', text:'Un soupçon...',
+        hint:'"Ajoute une ______ de sel." (pizca)',
+        answer:'pincée', options:['goutte','pincée','tranche','tablette'] },
+      { emoji:'🫒', text:'Liquide en cuisson...',
+        hint:'"Verse un ______ d\'huile d\'olive." (chorrito)',
+        answer:'filet', options:['bocal','paquet','filet','kilo'] },
+      { emoji:'🍫', text:'Gourmandise...',
+        hint:'"J\'ai acheté une ______ de chocolat." (tableta)',
+        answer:'tablette', options:['boîte','tablette','tranche','pot'] },
+      { emoji:'🐟', text:'Dans le garde-manger...',
+        hint:'"Ouvre une ______ de thon." (lata / bote metálico)',
+        answer:'boîte', options:['bouteille','boîte','pincée','gousse'] },
+      { emoji:'🥄', text:'Petit dosage...',
+        hint:'"Prends une ______ de sucre pour ton café." (cucharada)',
+        answer:'cuillère', options:['cuillère','tranche','kilo','bouteille'] },
+      { emoji:'🥣', text:'Repas chaud...',
+        hint:'"Mange un ______ de soupe." (tazón / bol)',
+        answer:'bol', options:['bol','paquet','tranche','gousse'] },
+      { emoji:'⚖️', text:'Balance...',
+        hint:'"Je veux juste cent ______ de beurre." (gramos)',
+        answer:'grammes', options:['grammes','kilos','litres','boîtes'] },
+      { emoji:'🍪', text:'Achat...',
+        hint:'"Un ______ de biscuits t\'attend." (paquete)',
+        answer:'paquet', options:['paquet','pot','tranche','filet'] },
+      { emoji:'🍋', text:'Légèrement acide...',
+        hint:'"Mets une ______ de citron dans l\'eau." (gotita)',
+        answer:'goutte', options:['goutte','cuillère','tranche','pincée'] },
+      { emoji:'🫙', text:'Conserve en verre...',
+        hint:'"J\'ai acheté un ______ de confiture." (tarro de cristal)',
+        answer:'bocal', options:['bocal','boîte','kilo','paquet'] }
     ]
   },
 
@@ -1384,7 +1463,49 @@ const GDATA = {
         answer:'goûter', options:['goûter','mélanger','éplucher','cuire'] },
       { emoji:'🍽️', text:'C\'est prêt !',
         hint:'"Les invités arrivent, vous ______ la table ?" (poner, présent)',
-        answer:'mettez', options:['mettez','mettons','mets','mettent'] }
+        answer:'mettez', options:['mettez','mettons','mets','mettent'] },
+      { emoji:'🥖', text:'Dernière étape :',
+        hint:'"Peux-tu ______ la baguette en rondelles ?" (cortar)',
+        answer:'couper', options:['couper','éplucher','ajouter','goûter'] },
+      { emoji:'🍜', text:'Chaud devant :',
+        hint:'"Il faut bien ______ les pâtes pour qu\'elles ne collent pas." (mezclar/remover)',
+        answer:'mélanger', options:['couper','ajouter','mélanger','éplucher'] },
+      { emoji:'🧂', text:'Un conseil :',
+        hint:'"N\'oublie pas d\'______ un peu de sel." (añadir)',
+        answer:'ajouter', options:['ajouter','couper','éplucher','goûter'] },
+      { emoji:'🥣', text:'La touche lactée :',
+        hint:'"Maintenant, il faut ______ le lait dans le bol." (verter)',
+        answer:'verser', options:['verser','couper','cuire','laver'] },
+      { emoji:'🍅', text:'Un peu d\'hygiène :',
+        hint:'"Tu peux ______ les tomates, s\'il te plaît ?" (lavar)',
+        answer:'laver', options:['laver','goûter','éplucher','mettre'] },
+      { emoji:'♨️', text:'A feu vif :',
+        hint:'"Laissez ______ l\'eau lentement." (hervir / ebullir)',
+        answer:'bouillir', options:['bouillir','verser','mélanger','servir'] },
+      { emoji:'🛎️', text:'A table ! :',
+        hint:'"Il est temps de ______ les invités." (servir)',
+        answer:'servir', options:['servir','cuire','mélanger','goûter'] },
+      { emoji:'🥕', text:'Pendant ce temps...',
+        hint:'"Pendant que ça cuit, tu ______ les carottes." (éplucher, présent)',
+        answer:'épluches', options:['épluches','épluchent','épluchez','épluche'] },
+      { emoji:'🍰', text:'Super bon !',
+        hint:'"Hier, nous ______ ton gâteau, c\'était divin !" (goûter, passé composé)',
+        answer:'avons goûté', options:['avons goûté','avez goûté','ont goûté','suis goûté'] },
+      { emoji:'🧂', text:'Attention au sel !',
+        hint:'"Ne ______ pas trop de sel !" (mettre, impératif tu)',
+        answer:'mets', options:['mets','mettez','mettons','mettent'] },
+      { emoji:'🥄', text:'L\'ordre de la recette :',
+        hint:'"Vous ______ le sucre à la fin." (ajouter, présent vous)',
+        answer:'ajoutez', options:['ajoutez','ajoutons','ajoutent','ajoutes'] },
+      { emoji:'🥖', text:'Au travail :',
+        hint:'"D\'abord, je ______ le pain." (couper, présent)',
+        answer:'coupe', options:['coupe','coupes','coupons','coupent'] },
+      { emoji:'🥘', text:'Ne laisse pas brûler :',
+        hint:'"S\'il te plaît, ______ bien la sauce." (mélanger, impératif tu)',
+        answer:'mélange', options:['mélange','mélanges','mélangez','mélangeons'] },
+      { emoji:'🍗', text:'Catastrophe :',
+        hint:'"Nous ______ la viande trop longtemps..." (cuire, passé composé)',
+        answer:'avons cuit', options:['avons cuit','avez cuit','ont cuit','sommes cuits'] }
     ]
   }
 };
@@ -1552,9 +1673,33 @@ function showRules(gameId) {
   const g = GDATA[gameId];
   document.getElementById('rules-title').textContent = `${g.emoji} ${g.name}`;
   document.getElementById('rules-text').innerHTML = g.rules;
-  document.getElementById('rules-play-btn').onclick = () => startGame(gameId);
+
+  const playBtn    = document.getElementById('rules-play-btn');
+  const restartBtn = document.getElementById('rules-restart-btn');
+
+  const maxIdx   = S.game ? (S.game.items?.length || S.game.questions?.length || S.game.rounds?.length || 0) : 0;
+  const isMidway = S.gameId === gameId && (S.idx > 0 || S.round > 0) && (S.idx < maxIdx || S.round < maxIdx);
+
+  if (isMidway) {
+    playBtn.textContent = '¡Reanudar! ▶';
+    playBtn.onclick     = () => resumeGame();
+    restartBtn.style.display = 'block';
+    restartBtn.onclick  = () => startGame(gameId);
+  } else {
+    playBtn.textContent = '¡Empezar ! 🚀';
+    playBtn.onclick     = () => startGame(gameId);
+    if (restartBtn) restartBtn.style.display = 'none';
+  }
+
   document.getElementById('rules-back-btn').onclick = () => showScreen('menu');
   showScreen('rules');
+}
+
+function resumeGame() {
+  document.getElementById('game-name-bar').textContent  = `${S.game.emoji} ${S.game.name}`;
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+  showScreen('game');
+  renderCurrent();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1591,16 +1736,13 @@ function startGame(gameId) {
   // Build active question list with rotation for pool-based games
   const game = Object.assign({}, gameDef);
   if (gameDef.pool) {
-    const n = 10; // questions per session
-    game.questions = pickItems(gameId, gameDef.pool, Math.min(n, gameDef.pool.length));
+    game.questions = pickItems(gameId, gameDef.pool, 20);
   }
   if (gameDef.type === 'photo-spell' && gameDef.items) {
-    const n = 8;
-    game.items = pickItems(gameId, gameDef.items, Math.min(n, gameDef.items.length));
+    game.items = pickItems(gameId, gameDef.items, 20);
   }
   if ((gameDef.type === 'sort' || gameDef.type === 'swipe') && gameDef.items) {
-    const n = 10;
-    game.items = pickItems(gameId, gameDef.items, Math.min(n, gameDef.items.length));
+    game.items = pickItems(gameId, gameDef.items, 20);
   }
   S.game = game;
 
@@ -1796,7 +1938,11 @@ function psValidate() {
     setTimeout(nextStep, 1400);
   } else {
     setTimeout(() => {
-        showErrorFb(`Mince ! L'orthographe correcte était :<br><strong style="font-size:1.4em;letter-spacing:1px;color:var(--gold)">${item.answer.toUpperCase()}</strong>`, nextStep);
+        let msg = `Mince ! L'orthographe correcte était :<br><strong style="font-size:1.4em;letter-spacing:1px;color:var(--gold)">${item.answer.toUpperCase()}</strong>`;
+        if (item.mnemonic) {
+            msg += `<br><br><span style="font-size:.85rem;color:#88BBDD">💡 Pour s'en souvenir :<br><em>${item.mnemonic}</em></span>`;
+        }
+        showErrorFb(msg, nextStep);
     }, 800);
   }
 }
@@ -1954,9 +2100,9 @@ function renderSwipe() {
   const body = document.getElementById('game-body');
   body.innerHTML = `
     <div class="q-num">Frase ${S.idx+1} / ${g.items.length}</div>
-    <div style="text-align:center;color:var(--muted);font-size:.83rem">¿Crítica positiva o negativa?</div>
+    <div style="text-align:center;color:var(--muted);font-size:.83rem">¿Qué expresa esta frase?</div>
     <div class="swipe-card fade-in" id="sw-card">"${item.text}"</div>
-    <div class="swipe-note">${item.note}</div>
+    <div class="swipe-note" id="sw-note" style="opacity:0; transition:opacity .3s; min-height:1.2rem">${item.note}</div>
     <div class="swipe-buttons">
       <button class="swipe-btn neg" onclick="selectSwipe(0)">👎<span>Négative</span></button>
       <button class="swipe-btn pos" onclick="selectSwipe(1)">👍<span>Positive</span></button>
@@ -1967,8 +2113,10 @@ function selectSwipe(chosen) {
   const item = S.game.items[S.idx];
   const isOk = chosen === item.cat;
   const card = document.getElementById('sw-card');
+  const noteEl = document.getElementById('sw-note');
 
   document.querySelectorAll('.swipe-btn').forEach(b => b.style.pointerEvents = 'none');
+  if (noteEl) noteEl.style.opacity = '1';
 
   if (isOk) { card.style.borderColor = 'var(--ok)';  card.style.background = 'rgba(46,204,113,.14)'; S.score++; playSound('ok'); }
   else       { card.style.borderColor = 'var(--err)'; card.style.background = 'rgba(231,76,60,.14)';  playSound('err'); }
@@ -1983,10 +2131,14 @@ function selectSwipe(chosen) {
   };
 
   if (isOk) {
-    setTimeout(nextStep, 900);
+    setTimeout(nextStep, 1700);
   } else {
     setTimeout(() => {
-        showErrorFb(`Cette expression est :<br><strong style="font-size:1.15em;color:#fff">${item.cat === 1 ? 'Positive 👍' : 'Négative 👎'}</strong><br><span style="font-size:.85rem;color:var(--muted)">${item.note || ''}</span>`, nextStep);
+        let msg = `Cette expression est :<br><strong style="font-size:1.15em;color:#fff">${item.cat === 1 ? 'Positive 👍' : 'Négative 👎'}</strong><br><span style="font-size:.85rem;color:var(--muted)">${item.note || ''}</span>`;
+        if (item.mnemonic) {
+            msg += `<br><br><span style="font-size:.85rem;color:#88BBDD">💡 Conseil :<br><em>${item.mnemonic}</em></span>`;
+        }
+        showErrorFb(msg, nextStep);
     }, 600);
   }
 }
