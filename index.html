@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0a16">
+<title>Français Quest</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0a16;
+  --surface:  #14142a;
+  --surface2: #1e1e3a;
+  --blue:     #0055A4;
+  --blue2:    #0077CC;
+  --red:      #EF4135;
+  --gold:     #FFD700;
+  --text:     #E8E8F0;
+  --muted:    #7878A8;
+  --ok:       #2ECC71;
+  --err:      #E74C3C;
+  --border:   rgba(255,255,255,0.09);
+}
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stars */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1px 1px at 33% 52%, rgba(255,255,255,.3),  transparent),
+    radial-gradient(1px 1px at 64% 14%, rgba(255,255,255,.4),  transparent),
+    radial-gradient(1px 1px at 84% 73%, rgba(255,255,255,.3),  transparent),
+    radial-gradient(1px 1px at 54% 84%, rgba(255,255,255,.5),  transparent),
+    radial-gradient(1px 1px at 91% 34%, rgba(255,255,255,.4),  transparent),
+    radial-gradient(1px 1px at 21% 77%, rgba(255,255,255,.3),  transparent),
+    radial-gradient(1px 1px at 71% 41%, rgba(255,255,255,.4),  transparent),
+    radial-gradient(1px 1px at 44% 29%, rgba(255,255,255,.2),  transparent),
+    radial-gradient(1px 1px at 7%  59%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1px 1px at 57% 6%,  rgba(255,255,255,.3),  transparent),
+    radial-gradient(1px 1px at 97% 88%, rgba(255,255,255,.35), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SCREENS ─────────────────────────────────── */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+.slide-in { animation: slideIn .28s ease-out; }
+@keyframes slideIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.fade-in  { animation: fadeIn  .25s ease-out; }
+@keyframes fadeIn  { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── BUTTONS ─────────────────────────────────── */
+.btn {
+  display: block; width: 100%; max-width: 320px;
+  padding: .95rem 2rem; border: none; border-radius: 14px;
+  font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  transition: transform .13s, opacity .13s;
+  text-align: center; letter-spacing: .3px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(.96); opacity: .88; }
+.btn-primary { background: linear-gradient(135deg, var(--blue), var(--blue2)); color: #fff; box-shadow: 0 4px 20px rgba(0,85,164,.4); margin: 0 auto; }
+.btn-red     { background: linear-gradient(135deg, var(--red), #CC2222);        color: #fff; box-shadow: 0 4px 20px rgba(239,65,53,.35); margin: 0 auto; }
+.btn-green   { background: linear-gradient(135deg, var(--ok),  #27AE60);        color: #fff; box-shadow: 0 4px 20px rgba(46,204,113,.35); margin: 0 auto; }
+.btn-gold    { background: linear-gradient(135deg, var(--gold), #FFA500);       color: #1a1000; box-shadow: 0 4px 20px rgba(255,215,0,.35); margin: 0 auto; }
+.btn-ghost   { background: transparent; color: var(--muted); border: 1px solid var(--border); margin: 0 auto; }
+
+/* ── TOPBAR / BACK ───────────────────────────── */
+.screen-header {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1.1rem 1.25rem .9rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 10;
+}
+.back-btn {
+  background: var(--surface); border: none; color: var(--text);
+  width: 36px; height: 36px; border-radius: 10px;
+  font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s;
+}
+.back-btn:active { background: var(--surface2); }
+.screen-title { font-size: 1.25rem; font-weight: 700; flex: 1; }
+
+.scrollable { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+
+/* ── MENU ────────────────────────────────────── */
+#screen-menu {
+  align-items: center; justify-content: center;
+  padding: 2rem 1.5rem; text-align: center; gap: 0;
+}
+.logo-emoji { font-size: 4rem; margin-bottom: .4rem; animation: float 3.5s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.logo-title { font-size: 2.6rem; font-weight: 900; letter-spacing: -1px; line-height: 1; margin-bottom: .2rem; }
+.logo-title .t1 { color: var(--blue2); }
+.logo-title .t2 { color: #fff; }
+.logo-title .t3 { color: var(--red); }
+.logo-sub { color: var(--muted); font-size: .75rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 2rem; }
+
+.prog-overview { display: flex; gap: .75rem; margin-bottom: 2.5rem; }
+.prog-block {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: .65rem 1rem; text-align: center; min-width: 76px;
+}
+.prog-block .pb-stars { font-size: 1rem; margin-bottom: .15rem; }
+.prog-block .pb-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── MENU BLOCK BUTTONS ──────────────────────── */
+.menu-blocks {
+  display: flex; flex-direction: column; gap: .75rem;
+  width: 100%; max-width: 340px; margin-bottom: .5rem;
+}
+.menu-block-btn {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: 18px; padding: 1rem 1.2rem;
+  cursor: pointer; transition: transform .15s, border-color .15s;
+  text-align: left; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-block-btn::before {
+  content:''; position:absolute; top:0; left:0; bottom:0; width:5px; border-radius:18px 0 0 18px;
+}
+.menu-block-btn.b1::before { background: linear-gradient(180deg, var(--blue), #00AAFF); }
+.menu-block-btn.b2::before { background: linear-gradient(180deg, #E67E22, #F1C40F); }
+.menu-block-btn.b3::before { background: linear-gradient(180deg, var(--red), #9B59B6); }
+.menu-block-btn.b4::before { background: linear-gradient(180deg, #27AE60, #2ECC71); }
+.menu-block-btn:active { transform: scale(.97); border-color: rgba(255,255,255,.2); }
+.mb-icon  { font-size: 2.2rem; flex-shrink: 0; }
+.mb-info  { flex: 1; min-width: 0; }
+.mb-title { font-size: .95rem; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: .3rem; }
+.mb-progress {
+  background: rgba(255,255,255,.08); border-radius: 4px; height: 5px; width: 100%; overflow: hidden;
+}
+.mb-bar { height: 100%; border-radius: 4px; transition: width .4s ease; }
+.menu-block-btn.b1 .mb-bar { background: linear-gradient(90deg, var(--blue), #00AAFF); }
+.menu-block-btn.b2 .mb-bar { background: linear-gradient(90deg, #E67E22, #F1C40F); }
+.menu-block-btn.b3 .mb-bar { background: linear-gradient(90deg, var(--red), #9B59B6); }
+.menu-block-btn.b4 .mb-bar { background: linear-gradient(90deg, #27AE60, #2ECC71); }
+.mb-score { font-size: .72rem; color: var(--muted); margin-top: .3rem; }
+.mb-arrow { font-size: 1.2rem; color: var(--muted); flex-shrink: 0; }
+
+/* ── STREAK TOAST ─────────────────────────────── */
+.streak-toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: linear-gradient(135deg, #E67E22, #F1C40F);
+  color: #1a0a00; border-radius: 30px; padding: .55rem 1.3rem;
+  font-weight: 800; font-size: .95rem; z-index: 200;
+  opacity: 0; pointer-events: none; white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  transition: opacity .25s, transform .25s;
+}
+.streak-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── GAME SCORE DETAIL ────────────────────────── */
+.score-detail {
+  display: flex; align-items: center; gap: .5rem;
+  background: var(--surface); border-radius: 10px; padding: .5rem .8rem;
+  font-size: .82rem;
+}
+.score-detail .sd-pts { font-weight: 800; color: var(--gold); font-size: 1rem; }
+.score-detail .sd-streak { color: #E67E22; font-weight: 700; }
+
+/* ── BLOCKS ──────────────────────────────────── */
+.blocks-list { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.block-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+  padding: 1.4rem; cursor: pointer;
+  transition: transform .18s, border-color .18s;
+  position: relative; overflow: hidden;
+}
+.block-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: 18px 18px 0 0; }
+.block-card.b1::before { background: linear-gradient(90deg, var(--blue), #00AAFF); }
+.block-card.b2::before { background: linear-gradient(90deg, #E67E22, #F1C40F); }
+.block-card.b3::before { background: linear-gradient(90deg, var(--red), #9B59B6); }
+.block-card.b4::before { background: linear-gradient(90deg, #27AE60, #2ECC71); }
+.block-card:active { transform: scale(.97); }
+.block-num { font-size: .68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: .35rem; }
+.b1 .block-num { color: #00AAFF; }
+.b2 .block-num { color: #E67E22; }
+.b3 .block-num { color: var(--red); }
+.b4 .block-num { color: #27AE60; }
+.block-title { font-size: 1.25rem; font-weight: 800; margin-bottom: .3rem; color: #fff; }
+.block-sub   { font-size: .82rem; color: var(--muted); margin-bottom: .9rem; line-height: 1.4; }
+.block-meta  { display: flex; justify-content: space-between; align-items: center; }
+.block-count { font-size: .72rem; color: var(--muted); }
+
+/* ── GAMES LIST ──────────────────────────────── */
+.games-list { padding: 1.25rem; display: flex; flex-direction: column; gap: .7rem; }
+.game-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1rem 1.1rem; cursor: pointer;
+  transition: transform .18s, background .18s;
+  display: flex; align-items: center; gap: .9rem;
+}
+.game-card:active { transform: scale(.97); background: var(--surface2); }
+.gc-emoji {
+  font-size: 1.8rem; width: 50px; height: 50px;
+  background: var(--surface2); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.gc-info   { flex: 1; }
+.gc-name   { font-size: .98rem; font-weight: 700; margin-bottom: .18rem; }
+.gc-desc   { font-size: .78rem; color: var(--muted); line-height: 1.3; }
+.gc-score  { text-align: right; flex-shrink: 0; }
+.gc-stars  { font-size: .95rem; }
+.gc-pts    { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+
+/* ── GAME SCREEN ─────────────────────────────── */
+#screen-game { padding: 0; }
+.game-topbar {
+  display: flex; align-items: center; padding: .9rem 1.1rem; gap: .7rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 10;
+}
+.game-name-bar { flex: 1; font-weight: 700; font-size: .92rem; }
+.game-score-bar { font-size: .92rem; color: var(--gold); font-weight: 700; }
+
+.progress-wrap { background: var(--surface); height: 4px; width: 100%; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--red)); transition: width .3s ease; }
+
+.game-body { padding: 1.4rem 1.1rem; flex: 1; display: flex; flex-direction: column; gap: 1.2rem; }
+
+.q-num    { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.q-emoji  { font-size: 3.2rem; text-align: center; }
+.q-text   { font-size: 1.1rem; font-weight: 600; line-height: 1.5; color: #fff; }
+.q-word   { font-size: 1.5rem; color: var(--gold); font-weight: 900; margin-top: .2rem; }
+
+.hint-box {
+  background: rgba(0,85,164,.14); border: 1px solid rgba(0,85,164,.3);
+  border-radius: 12px; padding: .9rem 1rem;
+  font-style: italic; color: #88BBDD; font-size: .92rem; line-height: 1.55;
+}
+
+/* MCQ options */
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.opt-btn {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+  padding: .85rem .65rem; font-size: .87rem; font-weight: 600;
+  cursor: pointer; color: var(--text); text-align: center;
+  line-height: 1.3; transition: all .18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.opt-btn:active:not(.disabled) { transform: scale(.95); }
+.opt-btn.correct { background: rgba(46,204,113,.22); border-color: var(--ok);  color: var(--ok);  }
+.opt-btn.wrong   { background: rgba(231,76,60,.22);  border-color: var(--err); color: var(--err); }
+.opt-btn.disabled { pointer-events: none; }
+
+/* ── TIMER GRID ──────────────────────────────── */
+.timer-display {
+  text-align: center; font-size: 2.6rem; font-weight: 900;
+  font-variant-numeric: tabular-nums; transition: color .3s;
+}
+.timer-display.urgent { color: var(--red); animation: pulse .5s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+.grid-game { display: grid; grid-template-columns: repeat(2,1fr); gap: .55rem; }
+.grid-item {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+  padding: .7rem .5rem; text-align: center; cursor: pointer;
+  font-size: .82rem; font-weight: 600; line-height: 1.3;
+  transition: all .18s; -webkit-tap-highlight-color: transparent;
+}
+.grid-item .gi-emoji { font-size: 1.4rem; display: block; margin-bottom: .18rem; }
+.grid-item.selected { border-color: var(--blue2); background: rgba(0,119,204,.2); }
+.grid-item.correct  { border-color: var(--ok);   background: rgba(46,204,113,.2); color: var(--ok);  }
+.grid-item.wrong    { border-color: var(--err);   background: rgba(231,76,60,.2);  color: var(--err); }
+.grid-item.missed   { border-color: var(--ok);   background: rgba(46,204,113,.1); opacity: .7; }
+
+/* ── SORT ────────────────────────────────────── */
+.sort-card {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 16px;
+  padding: 1.25rem; text-align: center;
+  font-size: 1.1rem; font-weight: 700; color: #fff;
+}
+.sort-card .sc-emoji { font-size: 2.3rem; display: block; margin-bottom: .35rem; }
+.sort-card .sc-note  { font-size: .78rem; color: var(--muted); margin-top: .3rem; }
+
+.sort-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.sort-btn {
+  padding: .95rem .75rem; border: 2px solid var(--border); border-radius: 14px;
+  background: var(--surface); color: var(--text);
+  font-size: .82rem; font-weight: 700; cursor: pointer;
+  text-align: center; line-height: 1.35; transition: all .18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sort-btn:active { transform: scale(.95); }
+.sort-btn.cat0 { border-color: var(--blue2); }
+.sort-btn.cat1 { border-color: var(--red); }
+.sort-btn.sb-ok  { background: rgba(46,204,113,.22); border-color: var(--ok);  color: var(--ok);  }
+.sort-btn.sb-err { background: rgba(231,76,60,.22);  border-color: var(--err); color: var(--err); }
+
+/* ── SWIPE (THERMOMÈTRE) ─────────────────────── */
+.swipe-card {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 20px;
+  padding: 1.8rem 1.3rem; text-align: center;
+  font-size: 1.15rem; font-weight: 700; color: #fff;
+  min-height: 110px; display: flex; align-items: center; justify-content: center;
+  line-height: 1.4; transition: border-color .25s, background .25s;
+}
+.swipe-note { font-size: .78rem; color: var(--muted); text-align: center; }
+.swipe-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.swipe-btn {
+  padding: 1.1rem; border-radius: 16px; border: none;
+  font-size: 1.4rem; cursor: pointer; font-weight: 700;
+  transition: transform .13s; -webkit-tap-highlight-color: transparent;
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+}
+.swipe-btn span { font-size: .72rem; font-weight: 700; }
+.swipe-btn:active { transform: scale(.93); }
+.swipe-btn.neg { background: rgba(239,65,53,.18); border: 2px solid var(--red); color: var(--red); }
+.swipe-btn.pos { background: rgba(46,204,113,.18); border: 2px solid var(--ok); color: var(--ok); }
+
+/* ── RESULT ──────────────────────────────────── */
+#screen-result {
+  align-items: center; justify-content: center;
+  padding: 2rem 1.5rem; text-align: center;
+}
+.result-emoji  { font-size: 5rem; margin-bottom: .9rem; animation: float 3.5s ease-in-out infinite; }
+.result-title  { font-size: 1.8rem; font-weight: 900; margin-bottom: .2rem; color: #fff; }
+.result-sub    { color: var(--muted); margin-bottom: 1.3rem; font-size: .92rem; }
+.result-score  { font-size: 3.2rem; font-weight: 900; color: var(--gold); margin-bottom: .4rem; }
+.result-stars  { font-size: 2.3rem; letter-spacing: 5px; margin-bottom: 1.8rem; }
+.result-fb     { background: var(--surface); border-radius: 14px; padding: .9rem 1.1rem; margin-bottom: 1.8rem; font-size: .88rem; color: var(--muted); line-height: 1.5; max-width: 320px; }
+.result-btns   { display: flex; flex-direction: column; gap: .7rem; width: 100%; max-width: 320px; }
+
+/* ── ROUND FEEDBACK ──────────────────────────── */
+.round-fb {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  z-index: 100; background: rgba(0,0,0,.45); opacity: 0;
+  transition: opacity .2s; pointer-events: none;
+}
+.round-fb.show { opacity: 1; pointer-events: all; }
+.round-fb-box {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 20px;
+  padding: 1.5rem 2rem; text-align: center; max-width: 260px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.rfb-icon { font-size: 2.8rem; margin-bottom: .4rem; }
+.rfb-msg  { font-size: 1rem; font-weight: 700; margin-bottom: .2rem; }
+.rfb-ans  { font-size: .82rem; color: var(--muted); }
+
+/* ── CONFETTI ────────────────────────────────── */
+.confetti-piece {
+  position: fixed; width: 9px; height: 9px; top: -12px; z-index: 999;
+  pointer-events: none; border-radius: 2px;
+  animation: cfFall linear forwards;
+}
+@keyframes cfFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+/* ── RULES SCREEN ────────────────────────────── */
+.rules-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.1rem 1.2rem; font-size: .88rem; color: var(--muted); line-height: 1.6;
+}
+.rules-box strong { color: var(--text); }
+
+/* ── PHOTO-SPELL ──────────────────────────────── */
+.ps-photo {
+  font-size: 5.5rem; text-align: center; line-height: 1;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: 20px; padding: 1.2rem .5rem;
+}
+
+.ps-boxes-wrap {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  align-items: flex-end; gap: .4rem .25rem; min-height: 56px;
+}
+
+.ps-box {
+  width: 34px; height: 44px;
+  border-bottom: 3px solid var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-weight: 800; color: #fff;
+  text-transform: uppercase; transition: border-color .18s, color .18s;
+  flex-shrink: 0;
+}
+.ps-box.active  { border-color: var(--blue2); }
+.ps-box.correct { border-color: var(--ok);  color: var(--ok);  }
+.ps-box.wrong   { border-color: var(--err); color: var(--err); }
+.ps-box.revealed{ border-color: var(--gold); color: var(--gold); }
+.ps-separator {
+  font-size: 1.4rem; color: var(--muted); font-weight: 900;
+  margin: 0 .1rem; align-self: flex-end; padding-bottom: 4px;
+}
+.ps-word-gap { width: 14px; }
+
+.ps-hint-area {
+  background: rgba(0,85,164,.12); border: 1px solid rgba(0,85,164,.25);
+  border-radius: 12px; padding: .75rem 1rem;
+  font-size: .88rem; color: #88BBDD; line-height: 1.5;
+  min-height: 44px; display: none;
+}
+.ps-hint-area.visible { display: block; }
+
+.ps-controls {
+  display: flex; gap: .6rem; align-items: center; justify-content: space-between;
+}
+.ps-hint-btn {
+  background: rgba(255,215,0,.12); border: 1.5px solid rgba(255,215,0,.4);
+  color: var(--gold); border-radius: 12px;
+  padding: .65rem 1rem; font-size: .88rem; font-weight: 700;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-hint-btn:active  { transform: scale(.95); }
+.ps-hint-btn:disabled { opacity: .35; pointer-events: none; }
+.ps-validate-btn {
+  flex: 1; background: linear-gradient(135deg, var(--blue), var(--blue2));
+  border: none; color: #fff; border-radius: 12px;
+  padding: .65rem 1rem; font-size: .95rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-validate-btn:active { transform: scale(.96); opacity: .88; }
+.ps-validate-btn:disabled { opacity: .4; pointer-events: none; }
+
+/* Virtual keyboard */
+.vkb { display: flex; flex-direction: column; gap: .28rem; }
+.vkb-row { display: flex; justify-content: center; gap: .22rem; flex-wrap: nowrap; }
+.vkb-key {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; min-width: 30px; height: 42px;
+  font-size: .82rem; font-weight: 700;
+  cursor: pointer; color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s; padding: 0 .3rem;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; flex-shrink: 0;
+}
+.vkb-key:active { background: var(--blue2); color: #fff; }
+.vkb-del  { min-width: 46px; background: #2a1a1a; border-color: rgba(231,76,60,.35); color: var(--err); font-size: 1.1rem; }
+.vkb-del:active { background: var(--err); color: #fff; }
+.vkb-acc  { background: rgba(0,85,164,.2); border-color: rgba(0,119,204,.4); color: #88BBFF; font-size: .8rem; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ MENU ═══════════ -->
+<div id="screen-menu" class="screen active">
+  <div class="logo-emoji">🗼</div>
+  <div class="logo-title"><span class="t1">Fran</span><span class="t2">çais</span><span class="t3">Quest</span></div>
+  <div class="logo-sub">Français · 3º ESO</div>
+  <div class="menu-blocks" id="menu-blocks">
+    <div class="menu-block-btn b1" onclick="showGames('b1')">
+      <div class="mb-icon">🖥️</div>
+      <div class="mb-info">
+        <div class="mb-title">Le monde numérique</div>
+        <div class="mb-progress"><div class="mb-bar" id="mbbar-b1" style="width:0%"></div></div>
+        <div class="mb-score" id="mbscore-b1">0 pts</div>
+      </div>
+      <div class="mb-arrow">›</div>
+    </div>
+    <div class="menu-block-btn b2" onclick="showGames('b2')">
+      <div class="mb-icon">🏠</div>
+      <div class="mb-info">
+        <div class="mb-title">La maison</div>
+        <div class="mb-progress"><div class="mb-bar" id="mbbar-b2" style="width:0%"></div></div>
+        <div class="mb-score" id="mbscore-b2">0 pts</div>
+      </div>
+      <div class="mb-arrow">›</div>
+    </div>
+    <div class="menu-block-btn b3" onclick="showGames('b3')">
+      <div class="mb-icon">🎬</div>
+      <div class="mb-info">
+        <div class="mb-title">Fictions</div>
+        <div class="mb-progress"><div class="mb-bar" id="mbbar-b3" style="width:0%"></div></div>
+        <div class="mb-score" id="mbscore-b3">0 pts</div>
+      </div>
+      <div class="mb-arrow">›</div>
+    </div>
+    <div class="menu-block-btn b4" onclick="showGames('b4')">
+      <div class="mb-icon">🍽️</div>
+      <div class="mb-info">
+        <div class="mb-title">À table</div>
+        <div class="mb-progress"><div class="mb-bar" id="mbbar-b4" style="width:0%"></div></div>
+        <div class="mb-score" id="mbscore-b4">0 pts</div>
+      </div>
+      <div class="mb-arrow">›</div>
+    </div>
+  </div>
+  <button class="btn btn-ghost" style="margin-top:1.2rem;font-size:.82rem" onclick="resetProgress()">Reiniciar progreso 🗑️</button>
+</div>
+
+<!-- ═══════════ BLOQUES ═══════════ -->
+<div id="screen-bloques" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('menu')">☰</button>
+    <div class="screen-title">Elige un bloque</div>
+  </div>
+  <div class="blocks-list scrollable">
+    <div class="block-card b1" onclick="showGames('b1')">
+      <div class="block-num">Bloque 1</div>
+      <div class="block-title">🖥️ Le monde numérique</div>
+      <div class="block-sub">Objetos tecnológicos, acciones digitales, vocabulario y verbos</div>
+      <div class="block-meta">
+        <span class="block-count">4 juegos</span>
+        <span id="bstars-b1" style="font-size:.78rem;color:var(--muted)">0 pts</span>
+      </div>
+      <div style="margin-top:.6rem;background:rgba(255,255,255,.07);border-radius:4px;height:5px;overflow:hidden">
+        <div id="bbar-b1" style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),#00AAFF);width:0%;transition:width .4s"></div>
+      </div>
+    </div>
+    <div class="block-card b2" onclick="showGames('b2')">
+      <div class="block-num">Bloque 2</div>
+      <div class="block-title">🏠 La maison</div>
+      <div class="block-sub">Habitaciones, muebles, tareas domésticas, vocabulario y verbos</div>
+      <div class="block-meta">
+        <span class="block-count">5 juegos</span>
+        <span id="bstars-b2" style="font-size:.78rem;color:var(--muted)">0 pts</span>
+      </div>
+      <div style="margin-top:.6rem;background:rgba(255,255,255,.07);border-radius:4px;height:5px;overflow:hidden">
+        <div id="bbar-b2" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#E67E22,#F1C40F);width:0%;transition:width .4s"></div>
+      </div>
+    </div>
+    <div class="block-card b3" onclick="showGames('b3')">
+      <div class="block-num">Bloque 3</div>
+      <div class="block-title">🎬 Fictions</div>
+      <div class="block-sub">Géneros, críticas, sentimientos, vocabulario y verbos</div>
+      <div class="block-meta">
+        <span class="block-count">5 juegos</span>
+        <span id="bstars-b3" style="font-size:.78rem;color:var(--muted)">0 pts</span>
+      </div>
+      <div style="margin-top:.6rem;background:rgba(255,255,255,.07);border-radius:4px;height:5px;overflow:hidden">
+        <div id="bbar-b3" style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--red),#9B59B6);width:0%;transition:width .4s"></div>
+      </div>
+    </div>
+    <div class="block-card b4" onclick="showGames('b4')">
+      <div class="block-num">Bloque 4</div>
+      <div class="block-title">🍽️ À table</div>
+      <div class="block-sub">Aliments, cuisine, quantités, expressions et verbes</div>
+      <div class="block-meta">
+        <span class="block-count">5 juegos</span>
+        <span id="bstars-b4" style="font-size:.78rem;color:var(--muted)">0 pts</span>
+      </div>
+      <div style="margin-top:.6rem;background:rgba(255,255,255,.07);border-radius:4px;height:5px;overflow:hidden">
+        <div id="bbar-b4" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#27AE60,#2ECC71);width:0%;transition:width .4s"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ JUEGOS ═══════════ -->
+<div id="screen-juegos" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('menu')">☰</button>
+    <div class="screen-title" id="juegos-title">Juegos</div>
+  </div>
+  <div class="games-list scrollable" id="games-list"></div>
+</div>
+
+<!-- ═══════════ REGLAS ═══════════ -->
+<div id="screen-rules" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="rules-back-btn">☰</button>
+    <div class="screen-title" id="rules-title">Cómo jugar</div>
+  </div>
+  <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
+    <div class="rules-box" id="rules-text"></div>
+    <button class="btn btn-primary" id="rules-play-btn">¡Empezar ! 🚀</button>
+  </div>
+</div>
+
+<!-- ═══════════ GAME ═══════════ -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <button class="back-btn" onclick="exitGame()">☰</button>
+    <div class="game-name-bar" id="game-name-bar">—</div>
+    <div class="game-score-bar" id="game-score-bar">0/0</div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="game-body scrollable" id="game-body"></div>
+</div>
+
+<!-- ═══════════ RESULT ═══════════ -->
+<div id="screen-result" class="screen">
+  <div class="result-emoji" id="res-emoji">🌟</div>
+  <div class="result-title" id="res-title">Bravo !</div>
+  <div class="result-sub"   id="res-sub">Juego completado</div>
+  <div class="result-score" id="res-score">10/10</div>
+  <div style="width:100%;max-width:300px;margin:.2rem auto .8rem">
+    <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:.35rem">
+      <span>Progression</span><span id="res-pct">0%</span>
+    </div>
+    <div style="background:rgba(255,255,255,.08);border-radius:6px;height:10px;overflow:hidden">
+      <div id="res-bar" style="height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--ok));width:0%;transition:width .6s .2s"></div>
+    </div>
+  </div>
+  <div class="result-fb"    id="res-fb"></div>
+  <div class="result-btns">
+    <button class="btn btn-primary" onclick="retryGame()">Réessayer &nbsp;🔄</button>
+    <button class="btn btn-ghost"   onclick="showScreen('menu')">Autres jeux</button>
+  </div>
+</div>
+
+<!-- ═══════════ STREAK TOAST ═══════════ -->
+<div class="streak-toast" id="streak-toast"></div>
+
+<!-- ═══════════ ROUND FEEDBACK OVERLAY ═══════════ -->
+<div class="round-fb" id="round-fb">
+  <div class="round-fb-box">
+    <div class="rfb-icon" id="rfb-icon"></div>
+    <div class="rfb-msg"  id="rfb-msg"></div>
+    <div class="rfb-ans"  id="rfb-ans"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  GAME DATA
+// ═══════════════════════════════════════════════════════
+
+const BLOCKS = {
+  b1: { name: '🖥️ Le monde numérique', games: ['tabu','acciones','vocab1','verbe1'] },
+  b2: { name: '🏠 La maison',           games: ['architecte','menage','contraires','vocab2','verbe2'] },
+  b3: { name: '🎬 Fictions',            games: ['trieur','thermometre','sentiments','vocab3','verbe3'] },
+  b4: { name: '🍽️ À table',              games: ['vocab4','phrases_utiles','quantites','cuisine_grid','verbe4'] }
+};
+
+// Per-game question pool — tracks which indices were used last run (for rotation)
+// Format: { gameId: [usedIndexes] }
+function getUsedIdx(gameId) {
+  try { return JSON.parse(localStorage.getItem(`fq_used_${gameId}`) || '[]'); } catch { return []; }
+}
+function saveUsedIdx(gameId, arr) {
+  localStorage.setItem(`fq_used_${gameId}`, JSON.stringify(arr));
+}
+
+// Pick `n` items from pool with max 20% repeat from last run
+function pickItems(gameId, pool, n) {
+  const used = new Set(getUsedIdx(gameId));
+  const fresh = pool.map((_,i) => i).filter(i => !used.has(i));
+  const old   = pool.map((_,i) => i).filter(i => used.has(i));
+  shuffleArr(fresh); shuffleArr(old);
+  const maxRepeat = Math.ceil(n * 0.2);
+  const picked = [...fresh.slice(0, n), ...old.slice(0, Math.max(0, n - fresh.length))];
+  // enforce 20% cap on repeats
+  const repeats = picked.filter(i => used.has(i));
+  let final;
+  if (repeats.length <= maxRepeat) {
+    final = picked.slice(0, n);
+  } else {
+    const nonRep = picked.filter(i => !used.has(i));
+    const repSlice = repeats.slice(0, maxRepeat);
+    final = shuffleArr([...nonRep.slice(0, n - maxRepeat), ...repSlice]).slice(0, n);
+  }
+  saveUsedIdx(gameId, final);
+  return final.map(i => pool[i]);
+}
+
+const GDATA = {
+
+  // ───────────────── BLOQUE 1 ─────────────────
+
+  tabu: {
+    name: 'Tabú Digital',
+    emoji: '🃏',
+    desc: 'Adivina el objeto a partir de las pistas en francés',
+    block: 'b1',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Lee la descripción en francés y elige el objeto que se describe.<br><br>Fíjate en las estructuras: <em>Ça sert à…</em>, <em>On l\'utilise pour…</em>, <em>C\'est en métal / plastique / verre / bois</em>.',
+    pool: [
+      { emoji:'🎮', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à jouer à des jeux vidéo. C\'est en plastique. On l\'utilise à la maison ou en déplacement."',
+        answer:'une console de jeux vidéo',
+        options:['un ordinateur portable','une console de jeux vidéo','une tablette','une enceinte portable'] },
+      { emoji:'🔊', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à écouter de la musique. C\'est en plastique et en métal. On peut l\'emporter partout sans câble."',
+        answer:'une enceinte portable',
+        options:['un casque audio','une enceinte portable','un téléphone','une tablette'] },
+      { emoji:'💻', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à travailler et naviguer sur Internet. C\'est en métal et en plastique. On peut le mettre dans un sac."',
+        answer:'un ordinateur portable',
+        options:['une tablette','une console de jeux vidéo','un ordinateur portable','un appareil photo'] },
+      { emoji:'📱', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à lire et regarder des vidéos. C\'est en verre et en métal. On le tient à deux mains."',
+        answer:'une tablette',
+        options:['une tablette','un ordinateur portable','un téléphone','un livre numérique'] },
+      { emoji:'📷', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à prendre des photos et des vidéos. C\'est en plastique et en verre. On l\'utilise pour capturer des souvenirs."',
+        answer:'un appareil photo',
+        options:['une tablette','un appareil photo','un casque audio','une montre connectée'] },
+      { emoji:'🛼', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à glisser sur des surfaces lisses. C\'est en plastique et en métal. On les met aux pieds pour s\'amuser."',
+        answer:'des rollers',
+        options:['des rollers','un skateboard','un vélo','des patins à glace'] },
+      { emoji:'🎧', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à écouter de la musique en privé. C\'est en plastique et en mousse. On le met sur les oreilles."',
+        answer:'un casque audio',
+        options:['une enceinte portable','un casque audio','un micro','une tablette'] },
+      { emoji:'⌚', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à connaître l\'heure et bien plus. C\'est en métal et en verre. On le porte au poignet."',
+        answer:'une montre connectée',
+        options:['un bracelet','une montre connectée','un téléphone','un capteur'] },
+      { emoji:'🚲', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à se déplacer rapidement. C\'est en métal et en caoutchouc. On l\'utilise pour faire du sport ou aller à l\'école."',
+        answer:'un vélo',
+        options:['des rollers','un vélo','une trottinette','un scooter'] },
+      { emoji:'🤖', text:'Lee la pista y adivina el objeto:',
+        hint:'"Ça sert à automatiser des tâches. C\'est en plastique et en métal. On le programme pour qu\'il travaille seul."',
+        answer:'un robot',
+        options:['un ordinateur','un robot','une tablette','une imprimante'] }
+    ]
+  },
+
+  acciones: {
+    name: 'Actions Digitales',
+    emoji: '📲',
+    desc: '¿Qué acción digital corresponde a cada situación?',
+    block: 'b1',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Lee la situación y elige la acción digital correcta en francés.<br><br>Vocabulario clave: <em>prendre un selfie, télécharger une vidéo, tchatter, naviguer sur le web, publier sur les réseaux sociaux, créer un mot de passe, utiliser un pseudonyme…</em>',
+    pool: [
+      { emoji:'📸', text:'¿Qué acción corresponde?',
+        hint:'Tu veux garder un souvenir avec tes amis en faisant une photo de vous tous...',
+        answer:'prendre un selfie',
+        options:['naviguer sur le web','prendre un selfie','télécharger une vidéo','tchatter avec quelqu\'un'] },
+      { emoji:'⬇️', text:'¿Qué acción corresponde?',
+        hint:'Tu veux regarder une vidéo plus tard, sans connexion internet...',
+        answer:'télécharger une vidéo',
+        options:['télécharger une vidéo','prendre une photo','publier une story','naviguer sur le web'] },
+      { emoji:'💬', text:'¿Qué acción corresponde?',
+        hint:'Tu envoies des messages texte à tes amis en ligne en temps réel...',
+        answer:'tchatter avec quelqu\'un',
+        options:['surfer sur le web','tchatter avec quelqu\'un','créer un blog','utiliser un pseudonyme'] },
+      { emoji:'🌐', text:'¿Qué acción corresponde?',
+        hint:'Tu explores différents sites internet pour trouver des informations pour ton exposé...',
+        answer:'naviguer sur le web',
+        options:['naviguer sur le web','télécharger une application','poster une photo','créer un compte'] },
+      { emoji:'📤', text:'¿Qué acción corresponde?',
+        hint:'Tu partages une photo ou un texte sur Instagram ou Snapchat avec tes abonnés...',
+        answer:'publier quelque chose sur les réseaux sociaux',
+        options:['tchatter avec quelqu\'un','publier quelque chose sur les réseaux sociaux','naviguer sur le web','télécharger une vidéo'] },
+      { emoji:'🔑', text:'¿Qué acción corresponde?',
+        hint:'Tu crées une combinaison secrète de lettres et de chiffres pour protéger ton compte...',
+        answer:'créer un mot de passe',
+        options:['utiliser un pseudonyme','créer un mot de passe','protéger ses données','créer un compte'] },
+      { emoji:'🎭', text:'¿Qué acción corresponde?',
+        hint:'Tu utilises un faux nom sur internet pour ne pas révéler ton vrai identité...',
+        answer:'utiliser un pseudonyme',
+        options:['protéger ses données','utiliser un pseudonyme','créer un mot de passe','naviguer sur le web'] },
+      { emoji:'🛡️', text:'¿Qué acción corresponde?',
+        hint:'Tu fais attention à ne pas partager ton adresse, ton téléphone ou ta date de naissance en ligne...',
+        answer:'protéger ses données personnelles',
+        options:['naviguer sur le web','publier sur les réseaux sociaux','protéger ses données personnelles','tchatter'] },
+      { emoji:'📱', text:'¿Qué acción corresponde?',
+        hint:'Tu regardes les stories de tes amis et tu consultes ton fil d\'actualité sur Instagram...',
+        answer:'utiliser Instagram / Snapchat',
+        options:['utiliser Instagram / Snapchat','naviguer sur le web','tchatter avec quelqu\'un','créer un blog'] },
+      { emoji:'✍️', text:'¿Qué acción corresponde?',
+        hint:'Tu lis des articles et des opinions sur le site personnel d\'un auteur qui écrit régulièrement...',
+        answer:'aller sur des blogs',
+        options:['aller sur des blogs','créer un compte','télécharger une vidéo','utiliser Snapchat'] }
+    ]
+  },
+
+  // ───────────────── BLOQUE 2 ─────────────────
+
+  architecte: {
+    name: 'Architecte Express',
+    emoji: '🏗️',
+    desc: 'Selecciona los muebles que pertenecen a cada habitación en 15 seg',
+    block: 'b2',
+    type: 'timer-grid',
+    timeLimit: 15,
+    rules: '<strong>¿Cómo jugar?</strong><br>Se mostrará el nombre de una habitación. Tienes <strong>15 segundos</strong> para tocar todos los muebles y objetos que pertenecen a esa habitación.<br><br>¡Cuidado con los objetos trampa! Cada habitación tiene 4 rondas.',
+    rounds: [
+      { room:'La cuisine 🍳',
+        correct:['le frigo','le lave-vaisselle','le four','le micro-ondes','l\'évier'],
+        all:['le frigo','le lave-vaisselle','le four','le micro-ondes','l\'évier','le canapé','le lit','la baignoire','l\'armoire','la table de chevet'],
+        emojis:{'le frigo':'🧊','le lave-vaisselle':'🍽️','le four':'🔥','le micro-ondes':'📡','l\'évier':'🚰','le canapé':'🛋️','le lit':'🛏️','la baignoire':'🛁','l\'armoire':'🚪','la table de chevet':'🕯️'} },
+      { room:'La chambre 🛏️',
+        correct:['le lit','la table de chevet','l\'armoire','le bureau','l\'étagère'],
+        all:['le lit','la table de chevet','l\'armoire','le bureau','l\'étagère','le frigo','le lave-vaisselle','la baignoire','le canapé','l\'évier'],
+        emojis:{'le lit':'🛏️','la table de chevet':'🕯️','l\'armoire':'🚪','le bureau':'📚','l\'étagère':'📖','le frigo':'🧊','le lave-vaisselle':'🍽️','la baignoire':'🛁','le canapé':'🛋️','l\'évier':'🚰'} },
+      { room:'Le salon 🛋️',
+        correct:['le canapé','la télévision','la table basse','le fauteuil','le tapis'],
+        all:['le canapé','la télévision','la table basse','le fauteuil','le tapis','le lit','la baignoire','le frigo','l\'armoire','le lave-linge'],
+        emojis:{'le canapé':'🛋️','la télévision':'📺','la table basse':'🪑','le fauteuil':'💺','le tapis':'🟫','le lit':'🛏️','la baignoire':'🛁','le frigo':'🧊','l\'armoire':'🚪','le lave-linge':'🌀'} },
+      { room:'La salle de bains 🚿',
+        correct:['la baignoire','le lavabo','le miroir','le lave-linge','la douche'],
+        all:['la baignoire','le lavabo','le miroir','le lave-linge','la douche','le canapé','le lit','le frigo','le four','l\'étagère'],
+        emojis:{'la baignoire':'🛁','le lavabo':'🚰','le miroir':'🪞','le lave-linge':'🌀','la douche':'🚿','le canapé':'🛋️','le lit':'🛏️','le frigo':'🧊','le four':'🔥','l\'étagère':'📖'} }
+    ]
+  },
+
+  menage: {
+    name: 'Ménage Mystère',
+    emoji: '🧹',
+    desc: '¿Qué tâche ménagère representa cada emoji?',
+    block: 'b2',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Mira el emoji que representa una tarea doméstica y elige la expresión correcta en francés.<br><br>Vocabulario: <em>passer l\'aspirateur, faire la vaisselle, mettre la table, laver le linge, sortir les poubelles, faire le lit, ranger la chambre, repasser, faire les courses…</em>',
+    pool: [
+      { emoji:'🧹', text:'¿Qué tarea doméstica es esta?',
+        hint:'Utilisez l\'aspirateur pour nettoyer le sol de toute la maison...',
+        answer:'passer l\'aspirateur',
+        options:['faire la vaisselle','passer l\'aspirateur','mettre la table','laver le linge'] },
+      { emoji:'🍽️', text:'¿Qué tarea doméstica es esta?',
+        hint:'Nettoyer les assiettes, les verres et les couverts après le repas...',
+        answer:'faire la vaisselle',
+        options:['faire la vaisselle','passer l\'aspirateur','sortir les poubelles','repasser'] },
+      { emoji:'🗑️', text:'¿Qué tarea doméstica es esta?',
+        hint:'Emmener les sacs de déchets à l\'extérieur de la maison le soir...',
+        answer:'sortir les poubelles',
+        options:['faire les courses','laver le linge','sortir les poubelles','faire le lit'] },
+      { emoji:'🍴', text:'¿Qué tarea doméstica es esta?',
+        hint:'Placer les assiettes, les verres et les couverts sur la table avant le repas...',
+        answer:'mettre la table',
+        options:['faire la vaisselle','mettre la table','passer l\'aspirateur','cuisiner'] },
+      { emoji:'👕', text:'¿Qué tarea doméstica es esta?',
+        hint:'Mettre les vêtements sales dans la machine à laver...',
+        answer:'laver le linge',
+        options:['repasser','laver le linge','faire le lit','ranger la chambre'] },
+      { emoji:'🛏️', text:'¿Qué tarea doméstica es esta?',
+        hint:'Arranger les draps, les couvertures et les oreillers chaque matin...',
+        answer:'faire le lit',
+        options:['faire le lit','laver le linge','ranger la chambre','mettre la table'] },
+      { emoji:'📦', text:'¿Qué tarea doméstica es esta?',
+        hint:'Mettre de l\'ordre dans les affaires et les objets à leur place dans sa chambre...',
+        answer:'ranger la chambre',
+        options:['ranger la chambre','faire le lit','passer l\'aspirateur','sortir les poubelles'] },
+      { emoji:'👔', text:'¿Qué tarea doméstica es esta?',
+        hint:'Enlever les plis des vêtements avec un fer chaud...',
+        answer:'repasser',
+        options:['laver le linge','repasser','faire la vaisselle','ranger la chambre'] },
+      { emoji:'🛒', text:'¿Qué tarea doméstica es esta?',
+        hint:'Aller au supermarché pour acheter des aliments et des produits pour la maison...',
+        answer:'faire les courses',
+        options:['faire les courses','cuisiner','mettre la table','sortir les poubelles'] },
+      { emoji:'👨‍🍳', text:'¿Qué tarea doméstica es esta?',
+        hint:'Préparer des plats chauds et des repas dans la cuisine pour toute la famille...',
+        answer:'cuisiner',
+        options:['mettre la table','faire la vaisselle','cuisiner','faire les courses'] }
+    ]
+  },
+
+  contraires: {
+    name: '¡Contraires !',
+    emoji: '🔄',
+    desc: 'Encuentra el adjetivo contrario en francés',
+    block: 'b2',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Se mostrará un adjetivo que describe el estado de una habitación. Elige su contrario en francés.<br><br>Pares: <em>sale ↔ propre · en désordre ↔ bien rangée · ancien ↔ moderne · petit ↔ grand · sombre ↔ lumineux · inconfortable ↔ confortable…</em>',
+    pool: [
+      { emoji:'🧼', text:'Encuentra el contrario de:', word:'sale',
+        hint:'(sucio) → ¿Cómo se dice "limpio" en francés?',
+        answer:'propre', options:['propre','grand','ancien','sombre'] },
+      { emoji:'🗂️', text:'Encuentra el contrario de:', word:'en désordre',
+        hint:'(desordenado) → ¿Cómo se dice "bien ordenado"?',
+        answer:'bien rangée', options:['bien rangée','propre','moderne','lumineux'] },
+      { emoji:'🏛️', text:'Encuentra el contrario de:', word:'ancien',
+        hint:'(antiguo) → ¿Cómo se dice "moderno" en francés?',
+        answer:'moderne', options:['grand','moderne','propre','lumineux'] },
+      { emoji:'🏠', text:'Encuentra el contrario de:', word:'petit',
+        hint:'(pequeño) → ¿Cómo se dice "grande" en francés?',
+        answer:'grand', options:['propre','moderne','grand','confortable'] },
+      { emoji:'🌑', text:'Encuentra el contrario de:', word:'sombre',
+        hint:'(oscuro) → ¿Cómo se dice "luminoso" en francés?',
+        answer:'lumineux', options:['lumineux','grand','propre','bien rangée'] },
+      { emoji:'😖', text:'Encuentra el contrario de:', word:'inconfortable',
+        hint:'(incómodo) → ¿Cómo se dice "cómodo" en francés?',
+        answer:'confortable', options:['confortable','moderne','lumineux','grand'] },
+      { emoji:'📢', text:'Encuentra el contrario de:', word:'bruyant',
+        hint:'(ruidoso) → ¿Cómo se dice "tranquilo" en francés?',
+        answer:'calme', options:['calme','propre','grand','moderne'] },
+      { emoji:'🧊', text:'Encuentra el contrario de:', word:'froid',
+        hint:'(frío) → ¿Cómo se dice "caliente" en francés?',
+        answer:'chaud', options:['chaud','lumineux','grand','confortable'] }
+    ]
+  },
+
+  // ───────────────── BLOQUE 3 ─────────────────
+
+  trieur: {
+    name: 'Trieur de formats',
+    emoji: '📚',
+    desc: 'Clasifica cada formato como Narrativo o Cinematográfico',
+    block: 'b3',
+    type: 'sort',
+    rules: '<strong>¿Cómo jugar?</strong><br>Aparecerá una tarjeta con un formato (libro, película, etc.). Debes clasificarlo pulsando la categoría correcta.<br><br><strong>Narratifs 📖</strong>: roman, nouvelle, conte, BD…<br><strong>Cinématographiques 🎬</strong>: long-métrage, court-métrage, documentaire, film d\'animation, série…',
+    cats: ['Formats narratifs 📖','Formats cinématographiques 🎬'],
+    items: [
+      { text:'un roman',                emoji:'📕', cat:0, note:'novela' },
+      { text:'un long-métrage',         emoji:'🎥', cat:1, note:'largometraje' },
+      { text:'une nouvelle',            emoji:'📄', cat:0, note:'cuento corto' },
+      { text:'un documentaire',         emoji:'🎞️', cat:1, note:'documental' },
+      { text:'un conte',                emoji:'📖', cat:0, note:'cuento de hadas' },
+      { text:'un court-métrage',        emoji:'🎦', cat:1, note:'cortometraje' },
+      { text:'une BD',                  emoji:'💬', cat:0, note:'cómic / bande dessinée' },
+      { text:'un film d\'animation',    emoji:'🎠', cat:1, note:'película animada' },
+      { text:'une nouvelle policière',  emoji:'🔍', cat:0, note:'relato policiaco corto' },
+      { text:'une série',               emoji:'📺', cat:1, note:'serie de televisión' },
+      { text:'un roman fantastique',    emoji:'🧙', cat:0, note:'novela fantástica' },
+      { text:'un film d\'horreur',      emoji:'👻', cat:1, note:'película de terror' }
+    ]
+  },
+
+  thermometre: {
+    name: 'Thermomètre critique',
+    emoji: '🌡️',
+    desc: '¿Es una crítica positiva 👍 o negativa 👎?',
+    block: 'b3',
+    type: 'swipe',
+    rules: '<strong>¿Cómo jugar?</strong><br>Aparecerá una frase de crítica cinematográfica o literaria. Pulsa <strong>👍 Positive</strong> o <strong>👎 Négative</strong> según su significado.<br><br>Positivas: <em>chef-d\'œuvre, très réussi, j\'ai accroché…</em><br>Negativas: <em>perte de temps, vraiment nul, décevant…</em>',
+    items: [
+      { text:'C\'est un chef-d\'œuvre !',         cat:1, note:'¡Es una obra maestra!' },
+      { text:'C\'est une perte de temps !',        cat:0, note:'¡Es una pérdida de tiempo!' },
+      { text:'C\'est très réussi !',               cat:1, note:'¡Está muy logrado!' },
+      { text:'C\'est vraiment nul !',              cat:0, note:'¡Es malísimo!' },
+      { text:'J\'ai accroché dès le début !',      cat:1, note:'¡Me enganchó desde el principio!' },
+      { text:'Très décevant !',                    cat:0, note:'¡Muy decepcionante!' },
+      { text:'Il faut absolument le voir !',       cat:1, note:'¡Hay que verlo absolutamente!' },
+      { text:'C\'est interminable et ennuyeux.',   cat:0, note:'Es interminable y aburrido.' },
+      { text:'L\'histoire est trop bien !',        cat:1, note:'¡La historia es buenísima!' },
+      { text:'Je ne le conseille pas du tout.',    cat:0, note:'No lo recomiendo en absoluto.' },
+      { text:'Les personnages sont super !',       cat:1, note:'¡Los personajes son geniales!' },
+      { text:'À éviter absolument !',              cat:0, note:'¡Evitarlo absolutamente!' }
+    ]
+  },
+
+  // ───────────────── VOCABULARIO (foto → palabra) ─────────────────
+
+  vocab1: {
+    name: 'Photo & Mots — Numérique',
+    emoji: '🔤',
+    desc: 'Mira la foto y escribe el nombre en francés letra a letra',
+    block: 'b1',
+    type: 'photo-spell',
+    rules: '<strong>¿Cómo jugar?</strong><br>Observa el emoji (la "foto") y escribe el nombre del objeto en francés usando el teclado de pantalla.<br><br>💡 Puedes pedir hasta <strong>3 pistas</strong>. La tercera pista revela una letra automáticamente.<br><br>¡Atención a los acentos: <em>é, è, ê, à…</em>!',
+    items: [
+      { emoji:'📱', answer:'téléphone',     hints:['On l\'utilise pour appeler et envoyer des messages','En espagnol: teléfono','Empieza por T, 9 letras...'] },
+      { emoji:'💻', answer:'tablette',      hints:['C\'est un objet numérique plat et tactile','En espagnol: tableta','Empieza por T, 8 letras...'] },
+      { emoji:'🔊', answer:'enceinte',      hints:['Ça sert à écouter de la musique sans câble','On peut l\'emporter partout','Empieza por E, 8 letras...'] },
+      { emoji:'🎧', answer:'casque',        hints:['On le met sur les oreilles pour écouter de la musique','En espagnol: auriculares / casco','Empieza por C, 6 letras...'] },
+      { emoji:'⌚', answer:'montre',        hints:['On le porte au poignet pour connaître l\'heure','En espagnol: reloj de pulsera','Empieza por M, 6 letras...'] },
+      { emoji:'🤖', answer:'robot',         hints:['C\'est une machine programmée pour faire des tâches','Le même mot existe en espagnol','Empieza por R, 5 letras...'] },
+      { emoji:'🚲', answer:'vélo',          hints:['C\'est un moyen de transport à deux roues','En espagnol: bicicleta / bici','Empieza por V, 4 letras...'] },
+      { emoji:'🛼', answer:'rollers',       hints:['On les met aux pieds pour glisser sur les surfaces','C\'est un mot anglais utilisé en français','Empieza por R, 7 letras...'] },
+      { emoji:'📷', answer:'appareil photo',hints:['Ça sert à prendre des photos et des vidéos','En espagnol: cámara de fotos','Dos palabras: A... + P...'] },
+      { emoji:'🌐', answer:'internet',      hints:['C\'est le réseau mondial de communication numérique','Le même mot existe en espagnol','Empieza por I, 8 letras...'] }
+    ]
+  },
+
+  vocab2: {
+    name: 'Photo & Mots — La maison',
+    emoji: '🔤',
+    desc: 'Mira la foto y escribe el nombre del mueble en francés',
+    block: 'b2',
+    type: 'photo-spell',
+    rules: '<strong>¿Cómo jugar?</strong><br>Observa el emoji (la "foto") y escribe el nombre del mueble u objeto en francés usando el teclado de pantalla.<br><br>💡 Puedes pedir hasta <strong>3 pistas</strong>. La tercera pista revela una letra automáticamente.<br><br>¡Atención a los acentos!',
+    items: [
+      { emoji:'🛋️', answer:'canapé',       hints:['C\'est un meuble confortable du salon pour s\'asseoir','En espagnol: sofá','Empieza por C, 6 letras...'] },
+      { emoji:'🧊', answer:'frigo',         hints:['C\'est un électroménager de la cuisine pour conserver les aliments','En espagnol: frigorífico / nevera','Empieza por F, 5 letras...'] },
+      { emoji:'🛁', answer:'baignoire',     hints:['C\'est un objet de la salle de bains pour prendre un bain','En espagnol: bañera','Empieza por B, 9 letras...'] },
+      { emoji:'🛏️', answer:'lit',           hints:['C\'est le meuble de la chambre où on dort','En espagnol: cama','Empieza por L, 3 letras...'] },
+      { emoji:'📺', answer:'télévision',    hints:['C\'est un appareil électronique du salon pour regarder des émissions','En espagnol: televisión','Empieza por T, 10 letras...'] },
+      { emoji:'🚪', answer:'armoire',       hints:['C\'est un grand meuble de la chambre pour ranger les vêtements','En espagnol: armario','Empieza por A, 7 letras...'] },
+      { emoji:'🪞', answer:'miroir',        hints:['C\'est un objet qui reflète l\'image','En espagnol: espejo','Empieza por M, 6 letras...'] },
+      { emoji:'🔥', answer:'four',          hints:['C\'est un appareil de la cuisine pour cuire les aliments','En espagnol: horno','Empieza por F, 4 letras...'] },
+      { emoji:'💺', answer:'fauteuil',      hints:['C\'est un siège confortable avec des accoudoirs dans le salon','En espagnol: sillón / butaca','Empieza por F, 8 letras...'] },
+      { emoji:'📚', answer:'étagère',       hints:['C\'est un meuble pour poser des livres et des objets','En espagnol: estantería','Empieza por É, 7 letras...'] }
+    ]
+  },
+
+  vocab3: {
+    name: 'Photo & Mots — Fictions',
+    emoji: '🔤',
+    desc: 'Mira el emoji y escribe el género o formato literario/cinematográfico',
+    block: 'b3',
+    type: 'photo-spell',
+    rules: '<strong>¿Cómo jugar?</strong><br>Observa el emoji y escribe el género literario o cinematográfico en francés usando el teclado de pantalla.<br><br>💡 Puedes pedir hasta <strong>3 pistas</strong>. La tercera pista revela una letra automáticamente.',
+    items: [
+      { emoji:'📕', answer:'roman',          hints:['C\'est un long texte de fiction narratif','En espagnol: novela','Empieza por R, 5 letras...'] },
+      { emoji:'📄', answer:'nouvelle',       hints:['C\'est un court texte de fiction, plus court qu\'un roman','En espagnol: cuento corto / relato','Empieza por N, 8 letras...'] },
+      { emoji:'📖', answer:'conte',          hints:['C\'est une histoire souvent pour les enfants (ex: Le Petit Chaperon Rouge)','En espagnol: cuento de hadas','Empieza por C, 5 letras...'] },
+      { emoji:'🎞️', answer:'documentaire',  hints:['C\'est un film qui montre la réalité, pas de la fiction','En espagnol: documental','Empieza por D, 12 letras...'] },
+      { emoji:'🎦', answer:'court-métrage',  hints:['C\'est un film de moins de 30 minutes','Attention: mot composé avec un trait d\'union','C... + M..., 12 lettres au total'] },
+      { emoji:'👻', answer:'horreur',        hints:['C\'est un genre de film ou de roman qui fait peur','En espagnol: terror','Empieza por H, 7 letras...'] },
+      { emoji:'🧙', answer:'fantastique',    hints:['C\'est un genre avec des éléments magiques et irréels','En espagnol: fantástico','Empieza por F, 11 letras...'] },
+      { emoji:'🔍', answer:'policier',       hints:['C\'est un genre avec des enquêtes, des crimes et des détectives','En espagnol: policiaco','Empieza por P, 8 letras...'] },
+      { emoji:'💕', answer:'romantique',     hints:['C\'est un genre centré sur les histoires d\'amour','En espagnol: romántico','Empieza por R, 10 letras...'] },
+      { emoji:'📺', answer:'série',          hints:['C\'est un programme de télévision avec plusieurs épisodes','En espagnol: serie','Empieza por S, 5 letras...'] }
+    ]
+  },
+
+  sentiments: {
+    name: 'Express-toi !',
+    emoji: '😊',
+    desc: 'Elige la expresión de sentimiento correcta para cada situación',
+    block: 'b3',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Lee la situación y elige la frase que mejor expresa el sentimiento en francés.<br><br>Expresiones clave: <em>Ça m\'ennuie · Ça me passionne · Je trouve ça amusant · Ce n\'est pas terrible · J\'ai accroché · C\'est interminable · Très décevant ! · C\'est un chef-d\'œuvre !</em>',
+    pool: [
+      { emoji:'😴', text:'¿Cómo lo expresas?',
+        hint:'Tu lis un livre très long et ennuyeux depuis des heures... tu ne peux plus continuer.',
+        answer:'Ça m\'ennuie',
+        options:['Ça me passionne','Ça m\'ennuie','J\'ai accroché','Je trouve ça amusant'] },
+      { emoji:'🤩', text:'¿Cómo lo expresas?',
+        hint:'Tu regardes une série tellement captivante que tu ne peux absolument pas t\'arrêter...',
+        answer:'Ça me passionne',
+        options:['Ça m\'ennuie','Ça me passionne','Ce n\'est pas terrible','Très décevant !'] },
+      { emoji:'😤', text:'¿Cómo lo expresas?',
+        hint:'Le film était vraiment terrible, tu t\'attendais à quelque chose de bien meilleur...',
+        answer:'Très décevant !',
+        options:['Très décevant !','C\'est un chef-d\'œuvre !','Ça me passionne','J\'ai accroché'] },
+      { emoji:'😂', text:'¿Cómo lo expresas?',
+        hint:'Tu lis une BD vraiment drôle qui te fait beaucoup rire à chaque page...',
+        answer:'Je trouve ça amusant',
+        options:['Ça m\'ennuie','Je trouve ça amusant','C\'est interminable','Très décevant !'] },
+      { emoji:'😐', text:'¿Cómo lo expresas?',
+        hint:'Le film était correct, ni très bon ni très mauvais... bof.',
+        answer:'Ce n\'est pas terrible',
+        options:['C\'est un chef-d\'œuvre !','Ça me passionne','Ce n\'est pas terrible','J\'ai accroché'] },
+      { emoji:'🎯', text:'¿Cómo lo expresas?',
+        hint:'Dès les premières pages du roman, l\'histoire te captive complètement...',
+        answer:'J\'ai accroché',
+        options:['J\'ai accroché','Très décevant !','Ça m\'ennuie','Ce n\'est pas terrible'] },
+      { emoji:'😩', text:'¿Cómo lo expresas?',
+        hint:'Le film dure 4 heures et il ne se passe presque rien du tout...',
+        answer:'C\'est interminable',
+        options:['C\'est interminable','Ça me passionne','J\'ai accroché','C\'est un chef-d\'œuvre !'] },
+      { emoji:'🏆', text:'¿Cómo lo expresas?',
+        hint:'C\'est le meilleur film que tu aies jamais vu de toute ta vie !',
+        answer:'C\'est un chef-d\'œuvre !',
+        options:['Ce n\'est pas terrible','C\'est un chef-d\'œuvre !','Ça m\'ennuie','Très décevant !'] },
+      { emoji:'😌', text:'¿Cómo lo expresas?',
+        hint:'Tu lis un roman policier et tu veux continuer à lire. Les personnages t\'intéressent beaucoup.',
+        answer:'Je m\'intéresse à cette histoire',
+        options:['Je m\'intéresse à cette histoire','Ça m\'ennuie','C\'est interminable','Très décevant !'] },
+      { emoji:'🥱', text:'¿Cómo lo expresas?',
+        hint:'Un documentaire sur les insectes... aucun intérêt pour toi. Tu bâilles.',
+        answer:'Ça m\'ennuie',
+        options:['Ça me passionne','J\'ai accroché','Ça m\'ennuie','C\'est très réussi !'] },
+      { emoji:'😲', text:'¿Cómo lo expresas?',
+        hint:'La fin du film t\'a complètement surpris. Tu ne t\'y attendais pas du tout !',
+        answer:'C\'est vraiment surprenant !',
+        options:['C\'est vraiment surprenant !','C\'est interminable','Très décevant !','Ce n\'est pas terrible'] },
+      { emoji:'❤️', text:'¿Cómo lo expresas?',
+        hint:'Tu as lu ce roman 3 fois. C\'est ton préféré depuis toujours.',
+        answer:'Ça me passionne',
+        options:['Ça me passionne','Très décevant !','Ça m\'ennuie','Ce n\'est pas terrible'] }
+    ]
+  },
+
+  // ─────────────── VERBOS — BLOQUE 1 ───────────────
+
+  verbe1: {
+    name: 'Verbes Numériques',
+    emoji: '🔡',
+    desc: 'Conjuga los verbos del mundo digital en el tiempo correcto',
+    block: 'b1',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Elige la forma verbal correcta para completar la frase.<br><br>Verbos del tema: <em>aller, avoir, être, utiliser, télécharger, naviguer, tchatter, publier, protéger, se connecter…</em><br><br>Tiempos: <strong>présent, futur proche, négation</strong>.',
+    pool: [
+      { emoji:'💻', text:'Completa la frase:',
+        hint:'"Je ___ sur internet tous les soirs." (naviguer, présent)',
+        answer:'navigue', options:['naviguons','navigue','naviguez','navigues'] },
+      { emoji:'📱', text:'Completa la frase:',
+        hint:'"Elle ___ une vidéo sur YouTube." (télécharger, présent)',
+        answer:'télécharge', options:['télécharge','téléchargez','téléchargeons','télécharges'] },
+      { emoji:'💬', text:'Completa la frase:',
+        hint:'"Nous ___ avec nos amis sur WhatsApp." (tchatter, présent)',
+        answer:'tchattons', options:['tchattons','tchattez','tchattent','tchatte'] },
+      { emoji:'📸', text:'Completa la frase:',
+        hint:'"Ils ___ des photos sur Instagram." (publier, présent)',
+        answer:'publient', options:['publie','publions','publiez','publient'] },
+      { emoji:'🔑', text:'Completa la frase:',
+        hint:'"Tu ___ un mot de passe sécurisé." (créer, présent)',
+        answer:'crées', options:['crée','créons','crées','créez'] },
+      { emoji:'🌐', text:'Completa la frase:',
+        hint:'"Demain, nous ___ regarder un film en ligne." (futur proche)',
+        answer:'allons regarder', options:['allons regarder','va regarder','vais regarder','allez regarder'] },
+      { emoji:'🛡️', text:'Completa la frase:',
+        hint:'"Il ___ pas ses données personnelles en ligne." (ne… pas, protéger, présent)',
+        answer:'ne protège pas', options:['ne protège pas','protège pas','n\'a pas protégé','ne va pas protéger'] },
+      { emoji:'📡', text:'Completa la frase:',
+        hint:'"Vous ___ à Internet avec votre téléphone ?" (se connecter, présent)',
+        answer:'vous connectez', options:['vous connectez','se connectent','te connectes','nous connectons'] },
+      { emoji:'🎮', text:'Completa la frase:',
+        hint:'"Je ___ jamais de jeux vidéo violents." (ne… jamais, jouer)',
+        answer:'ne joue jamais', options:['ne joue jamais','joue jamais','joue toujours','ne joue pas'] },
+      { emoji:'⌚', text:'Completa la frase:',
+        hint:'"Elle ___ toujours sa montre connectée pour faire du sport." (utiliser, présent)',
+        answer:'utilise', options:['utilise','utilisons','utilisez','utilisent'] },
+      { emoji:'📤', text:'Completa la frase:',
+        hint:'"Ce soir, tu ___ cette vidéo sur YouTube." (futur proche)',
+        answer:'vas publier', options:['vas publier','vais publier','va publier','allez publier'] },
+      { emoji:'🤖', text:'Completa la frase:',
+        hint:'"Nous ___ un robot pour nettoyer la maison." (avoir, présent)',
+        answer:'avons', options:['avons','ont','avez','a'] },
+      { emoji:'📲', text:'Completa la frase:',
+        hint:'"Ils ___ pas encore de compte sur ce réseau social." (ne… pas, avoir)',
+        answer:'n\'ont pas', options:['n\'ont pas','ont pas','ne sont pas','n\'ont jamais'] },
+      { emoji:'🎧', text:'Completa la frase:',
+        hint:'"Tu ___ toujours de la musique avec ce casque ?" (écouter, présent)',
+        answer:'écoutes', options:['écoutes','écoutons','écoutez','écoute'] },
+      { emoji:'🌍', text:'Completa la frase:',
+        hint:'"Demain, ils ___ naviguer sur le web pour leur exposé." (futur proche)',
+        answer:'vont naviguer', options:['vont naviguer','va naviguer','allons naviguer','vais naviguer'] }
+    ]
+  },
+
+  // ─────────────── VERBOS — BLOQUE 2 ───────────────
+
+  verbe2: {
+    name: 'Verbes de la Maison',
+    emoji: '🔡',
+    desc: 'Conjuga los verbos de las tareas del hogar',
+    block: 'b2',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Elige la forma verbal correcta para completar la frase.<br><br>Verbos del tema: <em>faire, mettre, passer, laver, ranger, repasser, sortir, habiter, devoir, pouvoir…</em><br><br>Tiempos: <strong>présent, futur proche, obligation (devoir + inf.)</strong>.',
+    pool: [
+      { emoji:'🧹', text:'Completa la frase:',
+        hint:'"Je ___ l\'aspirateur chaque samedi." (passer, présent)',
+        answer:'passe', options:['passe','passons','passez','passes'] },
+      { emoji:'🍽️', text:'Completa la frase:',
+        hint:'"Nous ___ la vaisselle après le dîner." (faire, présent)',
+        answer:'faisons', options:['faisons','font','faites','fait'] },
+      { emoji:'🛏️', text:'Completa la frase:',
+        hint:'"Tu ___ ton lit chaque matin ?" (faire, présent)',
+        answer:'fais', options:['fait','fais','faisons','faites'] },
+      { emoji:'👕', text:'Completa la frase:',
+        hint:'"Elle ___ le linge le lundi." (laver, présent)',
+        answer:'lave', options:['lave','lavons','lavez','lavent'] },
+      { emoji:'🗑️', text:'Completa la frase:',
+        hint:'"Vous ___ les poubelles ce soir ?" (sortir, présent)',
+        answer:'sortez', options:['sortez','sortent','sort','sortons'] },
+      { emoji:'🍴', text:'Completa la frase:',
+        hint:'"Il ___ la table avant chaque repas." (mettre, présent)',
+        answer:'met', options:['met','mets','mettons','mettez'] },
+      { emoji:'👔', text:'Completa la frase:',
+        hint:'"Je dois ___ les chemises de papa." (repasser, infinitif)',
+        answer:'repasser', options:['repasser','repassant','repassé','repasse'] },
+      { emoji:'🏠', text:'Completa la frase:',
+        hint:'"Ils ___ dans un grand appartement à Paris." (habiter, présent)',
+        answer:'habitent', options:['habitent','habite','habitons','habitez'] },
+      { emoji:'🛒', text:'Completa la frase:',
+        hint:'"Demain, nous ___ faire les courses au marché." (futur proche)',
+        answer:'allons faire', options:['allons faire','va faire','vais faire','allez faire'] },
+      { emoji:'🌀', text:'Completa la frase:',
+        hint:'"Tu ___ ranger ta chambre avant ce soir." (devoir, présent)',
+        answer:'dois', options:['dois','doit','devons','devez'] },
+      { emoji:'🪟', text:'Completa la frase:',
+        hint:'"Nous ___ les fenêtres chaque semaine." (nettoyer, présent)',
+        answer:'nettoyons', options:['nettoyons','nettoient','nettoyez','nettoie'] },
+      { emoji:'🌱', text:'Completa la frase:',
+        hint:'"Il ___ les plantes tous les deux jours." (arroser, présent)',
+        answer:'arrose', options:['arrose','arrosons','arrosez','arrosent'] },
+      { emoji:'🪑', text:'Completa la frase:',
+        hint:'"Je vais ___ les meubles du salon." (déplacer, infinitif)',
+        answer:'déplacer', options:['déplacer','déplace','déplaçons','déplacé'] },
+      { emoji:'🔧', text:'Completa la frase:',
+        hint:'"Vous ne ___ pas réparer cet appareil vous-mêmes." (pouvoir, présent)',
+        answer:'pouvez', options:['pouvez','peuvent','peut','peux'] },
+      { emoji:'🧺', text:'Completa la frase:',
+        hint:'"Elle ___ étendre le linge après l\'avoir lavé." (devoir, présent)',
+        answer:'doit', options:['doit','dois','devons','doivent'] }
+    ]
+  },
+
+  // ─────────────── VERBOS — BLOQUE 3 ───────────────
+
+  verbe3: {
+    name: 'Verbes des Fictions',
+    emoji: '🔡',
+    desc: 'Conjuga los verbos para hablar de libros y cine',
+    block: 'b3',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Elige la forma verbal correcta para completar la frase.<br><br>Verbos del tema: <em>lire, voir, regarder, écrire, raconter, trouver, préférer, s\'ennuyer, s\'intéresser, recommander…</em><br><br>Tiempos: <strong>présent, imparfait, futur proche</strong>.',
+    pool: [
+      { emoji:'📕', text:'Completa la frase:',
+        hint:'"Je ___ un roman de science-fiction en ce moment." (lire, présent)',
+        answer:'lis', options:['lis','lit','lisez','lisons'] },
+      { emoji:'🎬', text:'Completa la frase:',
+        hint:'"Nous ___ un film d\'animation ce soir." (regarder, présent)',
+        answer:'regardons', options:['regardons','regardez','regarde','regardent'] },
+      { emoji:'✍️', text:'Completa la frase:',
+        hint:'"Elle ___ des nouvelles policières depuis l\'âge de 12 ans." (écrire, présent)',
+        answer:'écrit', options:['écrit','écris','écrivons','écrivez'] },
+      { emoji:'🎭', text:'Completa la frase:',
+        hint:'"Ils ___ l\'histoire d\'un personnage mystérieux." (raconter, présent)',
+        answer:'racontent', options:['racontent','raconte','racontons','racontez'] },
+      { emoji:'🏆', text:'Completa la frase:',
+        hint:'"Tu ___ ce film vraiment intéressant ?" (trouver, présent)',
+        answer:'trouves', options:['trouves','trouve','trouvons','trouvez'] },
+      { emoji:'📖', text:'Completa la frase:',
+        hint:'"Quand j\'étais petit, je ___ beaucoup de contes." (lire, imparfait)',
+        answer:'lisais', options:['lisais','lisait','lisions','lisiez'] },
+      { emoji:'🎥', text:'Completa la frase:',
+        hint:'"Avant, elle ___ toujours des films romantiques." (regarder, imparfait)',
+        answer:'regardait', options:['regardait','regardais','regardions','regardaient'] },
+      { emoji:'😴', text:'Completa la frase:',
+        hint:'"Je ___ pendant ce documentaire, il était trop long." (s\'ennuyer, imparfait)',
+        answer:'m\'ennuyais', options:['m\'ennuyais','s\'ennuyait','nous ennuyions','t\'ennuyais'] },
+      { emoji:'💕', text:'Completa la frase:',
+        hint:'"Nous ___ aux romans fantastiques depuis l\'année dernière." (s\'intéresser, présent)',
+        answer:'nous intéressons', options:['nous intéressons','vous intéressez','s\'intéressent','m\'intéresse'] },
+      { emoji:'🌟', text:'Completa la frase:',
+        hint:'"Demain, je ___ te recommander un excellent film." (futur proche)',
+        answer:'vais te recommander', options:['vais te recommander','va te recommander','allons recommander','vas recommander'] },
+      { emoji:'📚', text:'Completa la frase:',
+        hint:'"Ils ___ le même roman depuis un mois !" (lire, présent)',
+        answer:'lisent', options:['lisent','lis','lit','lisons'] },
+      { emoji:'🎞️', text:'Completa la frase:',
+        hint:'"L\'année dernière, nous ___ beaucoup de documentaires." (voir, imparfait)',
+        answer:'voyions', options:['voyions','voyait','voyiez','voyaient'] },
+      { emoji:'🔍', text:'Completa la frase:',
+        hint:'"Tu ne ___ jamais ce genre de roman policier ?" (lire, présent)',
+        answer:'lis jamais', options:['lis jamais','lit jamais','lisais jamais','liront jamais'] },
+      { emoji:'🎠', text:'Completa la frase:',
+        hint:'"Ce week-end, on ___ voir le nouveau film d\'animation." (futur proche)',
+        answer:'va voir', options:['va voir','vais voir','allons voir','allez voir'] },
+      { emoji:'📺', text:'Completa la frase:',
+        hint:'"Avant les smartphones, les gens ___ la télévision le soir." (regarder, imparfait)',
+        answer:'regardaient', options:['regardaient','regardait','regardais','regardions'] }
+    ]
+  },
+
+  // ───────────────── BLOQUE 4 ─────────────────
+
+  vocab4: {
+    name: 'Photo & Mots — À table',
+    emoji: '🔤',
+    desc: 'Mira el emoji y escribe el nombre del alimento u utensilio en francés',
+    block: 'b4',
+    type: 'photo-spell',
+    rules: '<strong>¿Cómo jugar?</strong><br>Observa el emoji y escribe la palabra en francés letra a letra.<br><br>💡 Tienes <strong>3 pistas</strong> por palabra. Cuidado con los acentos y las letras dobles.',
+    items: [
+      { emoji:'🍎', answer:'pomme',       hints:['Fruit rouge ou vert très croquant','En espagnol: manzana','Empieza por P, 5 letras...'] },
+      { emoji:'🍞', answer:'pain',        hints:['Aliment fait de farine et d\'eau cuit au four','En espagnol: pan','Empieza por P, 4 letras...'] },
+      { emoji:'🥛', answer:'lait',        hints:['Boisson blanche produite par les vaches','En espagnol: leche','Empieza por L, 4 letras...'] },
+      { emoji:'🧀', answer:'fromage',     hints:['Produit laitier souvent jaune ou blanc','En espagnol: queso','Empieza por F, 7 letras...'] },
+      { emoji:'🥄', answer:'cuillère',    hints:['Ustensile pour manger la soupe','En espagnol: cuchara','Attention aux 2 L de ce mot !'] },
+      { emoji:'🍴', answer:'fourchette',  hints:['Ustensile avec des dents pour piquer la viande','En espagnol: tenedor','Empieza por F, 10 letras...'] },
+      { emoji:'🍽️', answer:'assiette',    hints:['Récipient plat où l\'on met la nourriture pour manger','En espagnol: plato','Attention: double S !'] },
+      { emoji:'🍳', answer:'poêle',       hints:['Ustensile de cuisine pour faire frire les œufs','En espagnol: sartén','Empieza por P, 5 lettres, avec un accent circonflexe sur le o et un e ! ... p-o-ê-l-e'] },
+      { emoji:'🥕', answer:'carotte',     hints:['Légume de couleur orange que les lapins adorent','En espagnol: zanahoria','Attention: double T !'] },
+      { emoji:'🥦', answer:'brocoli',     hints:['Légume vert qui ressemble à un petit arbre','En espagnol: brócoli','Empieza por B, 7 letras...'] }
+    ]
+  },
+
+  phrases_utiles: {
+    name: 'J\'aime ou Je n\'aime pas',
+    emoji: '🌡️',
+    desc: '¿Esta frase expresa gusto o algo negativo/restricción?',
+    block: 'b4',
+    type: 'swipe',
+    rules: '<strong>¿Cómo jugar?</strong><br>Lee la frase. Si expresa gusto, placer o ganas de comer, pulsa <strong>👍 J\'aime</strong>. Si expresa problemas, restricciones o asco, pulsa <strong>👎 Je n\'aime pas</strong>.',
+    items: [
+      { text:'C\'est trop bon !',                  cat:1, note:'¡Está buenísimo!' },
+      { text:'Je me régale.',                      cat:1, note:'¡Me lo estoy gozando! (comer)' },
+      { text:'J\'ai un faible pour la brioche.',   cat:1, note:'Siento debilidad por el brioche.' },
+      { text:'Ma préférée, c\'est la tarte...',   cat:1, note:'Mi favorita es...' },
+      { text:'Ça sent bon l\'été !',               cat:1, note:'¡Huele a verano!' },
+      { text:'J\'adore l\'odeur du pain perdu.',   cat:1, note:'Me encanta el olor de las torrijas.' },
+      { text:'Remplir son assiette c\'est chouette !', cat:1, note:'¡Llenar el plato mola!' },
+      { text:'Je suis allergique au lait.',        cat:0, note:'Soy alérgico a la leche.' },
+      { text:'Je suis intolérant au gluten.',      cat:0, note:'Soy intolerante al gluten.' },
+      { text:'Je n\'aime pas les plats qui piquent.',cat:0, note:'No me gustan los platos que pican.' },
+      { text:'Je ne peux pas manger de crevettes.',cat:0, note:'No puedo comer gambas.' },
+      { text:'Je déteste les lentilles !',         cat:0, note:'¡Odio las lentejas!' },
+      { text:'C\'est pas terrible...',             cat:0, note:'No es gran cosa...' }
+    ]
+  },
+
+  quantites: {
+    name: 'Au supermarché',
+    emoji: '🛍️',
+    desc: 'Elige la cantidad o expresión adecuada',
+    block: 'b4',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Completa la frase con la expresión de cantidad o envase correcto en francés.<br><br>Fíjate: un kilo de, un sachet de, une tranche de, une bouteille de, un pot de, une gousse de...',
+    pool: [
+      { emoji:'🥔', text:'Combien de pommes de terre ?',
+        hint:'"J\'ai acheté 1 ______ de pommes de terre." (un kilo)',
+        answer:'kilo', options:['kilo','sachet','tranche','pot'] },
+      { emoji:'🌾', text:'Combien de farine ?',
+        hint:'"Il nous faut 100 ______ de farine pour la recette." (gramos)',
+        answer:'grammes', options:['grammes','litres','sachets','bouteilles'] },
+      { emoji:'🧂', text:'Un envase de azúcar vainillado...',
+        hint:'"Ajoutez 1 ______ de sucre vanillé." (un sobre de)',
+        answer:'sachet', options:['tranche','bouteille','sachet','gousse'] },
+      { emoji:'🥓', text:'¿Pan de molde con jamón?',
+        hint:'"Je voudrais deux ______ de jambon, s\'il vous plaît." (lonchas)',
+        answer:'tranches', options:['pots','tranches','gousses','boîtes'] },
+      { emoji:'🍾', text:'Una bebida...',
+        hint:'"Achetons 1 ______ d\'eau pour le pique-nique." (una botella)',
+        answer:'bouteille', options:['bouteille','sachet','tranche','boîte'] },
+      { emoji:'🍯', text:'Para la mermelada...',
+        hint:'"Où est le ______ de confiture à la fraise ?" (tarro/bote)',
+        answer:'pot', options:['sachet','pot','gousse','tranche'] },
+      { emoji:'🧄', text:'Una porción de ajo...',
+        hint:'"La recette demande 1 ______ d\'ail." (diente de ajo)',
+        answer:'gousse', options:['gousse','bouteille','tranche','kilo'] },
+      { emoji:'🥫', text:'Un envase de guisantes...',
+        hint:'"Ouvre cette ______ de petits pois." (lata)',
+        answer:'boîte', options:['boîte','sachet','tranche','pot'] },
+      { emoji:'🤏', text:'Una pequeña cantidad...',
+        hint:'"Il suffit d\'ajouter un ______ de sel." (un poco de)',
+        answer:'peu', options:['peu','kilo','sachet','pot'] },
+      { emoji:'🥛', text:'Volumen líquido...',
+        hint:'"Mélangez le tout avec 1 ______ de lait." (litro)',
+        answer:'litre', options:['kilo','litre','tranche','gousse'] }
+    ]
+  },
+
+  cuisine_grid: {
+    name: 'Chef Rapide',
+    emoji: '⏱️',
+    desc: 'Encuentra los elementos de cada categoría en 15 segundos',
+    block: 'b4',
+    type: 'timer-grid',
+    timeLimit: 15,
+    rules: '<strong>¿Cómo jugar?</strong><br>Tienes 15 segundos para encontrar todos los elementos que pertenezcan a la categoría pedida (verduras, frutas, utensilios, etc.).',
+    rounds: [
+      { room:'Les Ustensiles 🍳',
+        correct:['la poêle','la casserole','la passoire','le saladier','la planche'],
+        all:['la poêle','la casserole','la passoire','le saladier','la planche','la fourchette','l\'assiette','la cuillère','le verre','le couteau'],
+        emojis:{'la poêle':'🍳','la casserole':'🥘','la passoire':'🥣','le saladier':'🥗','la planche':'🪵','la fourchette':'🍴','l\'assiette':'🍽️','la cuillère':'🥄','le verre':'🥛','le couteau':'🔪'} },
+      { room:'Les Couverts 🍴',
+        correct:['le couteau','la fourchette','la cuillère','le couvert'],
+        all:['le couteau','la fourchette','la cuillère','le couvert','le verre','l\'assiette','le bol','la poêle','le frigo','le four'],
+        emojis:{'le couteau':'🔪','la fourchette':'🍴','la cuillère':'🥄','le couvert':'🍽️','le verre':'🥛','l\'assiette':'🍽️','le bol':'🥣','la poêle':'🍳','le frigo':'🧊','le four':'🔥'} },
+      { room:'Les Légumes 🥦',
+        correct:['la carotte','la courgette','le brocoli','l\'oignon','la pomme de terre'],
+        all:['la carotte','la courgette','le brocoli','l\'oignon','la pomme de terre','la fraise','la pomme','le beurre','le lait','la banane'],
+        emojis:{'la carotte':'🥕','la courgette':'🥒','le brocoli':'🥦','l\'oignon':'🧅','la pomme de terre':'🥔','la fraise':'🍓','la pomme':'🍎','le beurre':'🧈','le lait':'🥛','la banane':'🍌'} },
+      { room:'Les Fruits 🍎',
+        correct:['la pomme','la banane','la mûre','la fraise','l\'ananas'],
+        all:['la pomme','la banane','la mûre','la fraise','l\'ananas','l\'ail','l\'oignon','le champignon','la carotte','le poivre'],
+        emojis:{'la pomme':'🍎','la banane':'🍌','la mûre':'🫐','la fraise':'🍓','l\'ananas':'🍍','l\'ail':'🧄','l\'oignon':'🧅','le champignon':'🍄','la carotte':'🥕','le poivre':'🧂'} }
+    ]
+  },
+
+  verbe4: {
+    name: 'Top Chef: Verbes',
+    emoji: '🔡',
+    desc: 'Conjuga los verbos de la cocina (éplucher, couper, mélanger...)',
+    block: 'b4',
+    type: 'mcq',
+    rules: '<strong>¿Cómo jugar?</strong><br>Elige la forma verbal correcta para completar la instrucción de cocina en presente o infinitivo.<br><br>Verbos útiles: <em>éplucher, couper, ajouter, mélanger, cuire, goûter, mettre la table.</em>',
+    pool: [
+      { emoji:'🥔', text:'Première étape :',
+        hint:'"Pour faire une purée, je dois d\'abord ______ les pommes de terre." (pelar)',
+        answer:'éplucher', options:['éplucher','mélanger','ajouter','goûter'] },
+      { emoji:'🔪', text:'Ensuite :',
+        hint:'"On ______ les légumes en petits morceaux de même taille." (cortar, on)',
+        answer:'coupe', options:['coupons','coupe','coupes','coupent'] },
+      { emoji:'🧂', text:'Attention au goût :',
+        hint:'"Il faut ______ un peu de sel et de poivre." (añadir)',
+        answer:'ajouter', options:['éplucher','couper','ajouter','cuire'] },
+      { emoji:'🥣', text:'Tout est dans le bol :',
+        hint:'"Nous ______ tous les ingrédients pendant 2 minutes." (mezclar, présent)',
+        answer:'mélangeons', options:['mélanges','mélangez','mélange','mélangeons'] },
+      { emoji:'🔥', text:'Dans le four :',
+        hint:'"Maintenant, tu ______ le plat au four." (poner/meter)',
+        answer:'mets', options:['mets','mettrons','met ','mettons'] },
+      { emoji:'⏱️', text:'Patience :',
+        hint:'"Laissez ______ pendant 20 minutes à 180°C." (cocinar/hervir)',
+        answer:'cuire', options:['cuit','cuire','coupant','goûter'] },
+      { emoji:'🥄', text:'Le test final :',
+        hint:'"Avant de servir, je vaux ______ pour voir si c\'est bon." (probar)',
+        answer:'goûter', options:['goûter','mélanger','éplucher','cuire'] },
+      { emoji:'🍽️', text:'C\'est prêt !',
+        hint:'"Les invités arrivent, vous ______ la table ?" (poner, présent)',
+        answer:'mettez', options:['mettez','mettons','mets','mettent'] }
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+
+let S = {
+  block: null,
+  gameId: null,
+  game: null,
+  idx: 0,
+  score: 0,
+  maxScore: 0,
+  shuffOpts: [],
+  curQ: null,
+  round: 0,
+  selIdx: new Set(),
+  gridInfo: null,
+  timerInt: null,
+  timerVal: 0,
+  streak: 0,
+  hintCount: 0,
+  psInput: [],
+  psCursor: 0,
+  psBoxes: [],
+  psHintUsed: false
+};
+
+// ═══════════════════════════════════════════════════════
+//  PERSISTENCE
+// ═══════════════════════════════════════════════════════
+
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem('fq2_progress') || '{}'); }
+  catch { return {}; }
+}
+
+function saveScore(gameId, score, total) {
+  const p = getProgress();
+  const pct = score / total;
+  if (!p[gameId] || pct > (p[gameId].score / p[gameId].total)) {
+    p[gameId] = { score, total };
+  }
+  localStorage.setItem('fq2_progress', JSON.stringify(p));
+  refreshProgressUI();
+}
+
+function resetProgress() {
+  if (!confirm('¿Borrar todo el progreso? No se puede deshacer.')) return;
+  localStorage.removeItem('fq2_progress');
+  Object.keys(BLOCKS).forEach(bId => BLOCKS[bId].games.forEach(gId => localStorage.removeItem(`fq_used_${gId}`)));
+  refreshProgressUI();
+}
+
+function calcStars(score, total) {
+  const r = score / total;
+  if (r >= 0.9) return 3;
+  if (r >= 0.6) return 2;
+  if (r >  0)   return 1;
+  return 0;
+}
+
+function refreshProgressUI() {
+  const p = getProgress();
+  Object.keys(BLOCKS).forEach((bId) => {
+    const gs = BLOCKS[bId].games;
+    // sum best scores across games as % points
+    let totalPct = 0, count = 0;
+    gs.forEach(gId => { if (p[gId]) { totalPct += p[gId].score / p[gId].total; count++; } });
+    const pct = count ? Math.round((totalPct / gs.length) * 100) : 0;
+    const totalPts = gs.reduce((s, gId) => s + (p[gId]?.score || 0), 0);
+
+    // block list bars
+    const bbar = document.getElementById(`bbar-${bId}`);
+    if (bbar) bbar.style.width = `${pct}%`;
+    const bel = document.getElementById(`bstars-${bId}`);
+    if (bel) bel.textContent = `${totalPts} pts · ${pct}%`;
+
+    // menu bars
+    const mbar = document.getElementById(`mbbar-${bId}`);
+    if (mbar) mbar.style.width = `${pct}%`;
+    const msc = document.getElementById(`mbscore-${bId}`);
+    if (msc) msc.textContent = `${totalPts} pts · ${pct}%`;
+  });
+}
+
+// ── RACHA (streak) ────────────────────────────
+const STREAK_MSGS = [
+  { min:4,  msg:'🔥 En feu ! Continue comme ça !' },
+  { min:6,  msg:'⚡ Incroyable ! 6 bonnes réponses !' },
+  { min:8,  msg:'🏆 Champion ! Tu es imbattable !' },
+  { min:10, msg:'🌟 Parfait absolu ! Génie du français !' },
+];
+let _streakTimer = null;
+
+function checkStreak(correct) {
+  if (correct) {
+    S.streak = (S.streak || 0) + 1;
+    const msg = [...STREAK_MSGS].reverse().find(m => S.streak >= m.min);
+    if (msg && S.streak % 2 === 0) showStreakToast(msg.msg);
+  } else {
+    S.streak = 0;
+  }
+}
+
+function showStreakToast(text) {
+  const t = document.getElementById('streak-toast');
+  if (!t) return;
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(_streakTimer);
+  _streakTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(`screen-${id}`);
+  if (!el) return;
+  el.classList.add('active');
+  el.classList.remove('slide-in');
+  void el.offsetWidth;
+  el.classList.add('slide-in');
+  if (id === 'menu' || id === 'bloques') refreshProgressUI();
+}
+
+function showGames(blockId) {
+  S.block = blockId;
+  const block = BLOCKS[blockId];
+  document.getElementById('juegos-title').textContent = block.name;
+
+  const p = getProgress();
+  const list = document.getElementById('games-list');
+  list.innerHTML = block.games.map(gId => {
+    const g = GDATA[gId];
+    const prog = p[gId];
+    const pct  = prog ? Math.round((prog.score / prog.total) * 100) : null;
+    const pts  = prog ? `${prog.score}/${prog.total}` : '—';
+    const barW = pct !== null ? pct : 0;
+    return `<div class="game-card" onclick="showRules('${gId}')">
+      <div class="gc-emoji">${g.emoji}</div>
+      <div class="gc-info">
+        <div class="gc-name">${g.name}</div>
+        <div class="gc-desc">${g.desc}</div>
+        <div style="margin-top:.4rem;background:rgba(255,255,255,.07);border-radius:3px;height:4px;overflow:hidden">
+          <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--ok));width:${barW}%;transition:width .4s"></div>
+        </div>
+      </div>
+      <div class="gc-score">
+        <div class="gc-pts" style="font-size:.85rem;font-weight:800;color:var(--gold)">${pct !== null ? pct+'%' : '—'}</div>
+        <div class="gc-pts">${pts}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  showScreen('juegos');
+}
+
+function showRules(gameId) {
+  const g = GDATA[gameId];
+  document.getElementById('rules-title').textContent = `${g.emoji} ${g.name}`;
+  document.getElementById('rules-text').innerHTML = g.rules;
+  document.getElementById('rules-play-btn').onclick = () => startGame(gameId);
+  document.getElementById('rules-back-btn').onclick = () => showScreen('menu');
+  showScreen('rules');
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME ENGINE
+// ═══════════════════════════════════════════════════════
+
+function showErrorFb(msg, nextFn) {
+  const fb = document.getElementById('round-fb');
+  if (!fb) { setTimeout(nextFn, 1200); return; }
+  document.getElementById('rfb-icon').textContent = '❌';
+  document.getElementById('rfb-msg').textContent = 'Aïe ! Ce n\'est pas ça.';
+  document.getElementById('rfb-ans').innerHTML = msg + '<div style="font-size:0.75rem; color:var(--muted); margin-top:1.2rem; cursor:pointer;">👆 Touche pour continuer</div>';
+  fb.classList.add('show');
+  fb.onclick = () => {
+    fb.classList.remove('show');
+    fb.onclick = null;
+    nextFn();
+  };
+}
+
+function startGame(gameId) {
+  const gameDef = GDATA[gameId];
+  S.gameId = gameId;
+  S.idx    = 0;
+  S.score  = 0;
+  S.round  = 0;
+  S.selIdx = new Set();
+  S.hintCount = 0;
+  S.psInput   = [];   // photo-spell letter array
+  S.psCursor  = 0;
+  S.psBoxes   = [];   // flat list of box descriptors
+  S.psHintUsed = false;
+
+  // Build active question list with rotation for pool-based games
+  const game = Object.assign({}, gameDef);
+  if (gameDef.pool) {
+    const n = 10; // questions per session
+    game.questions = pickItems(gameId, gameDef.pool, Math.min(n, gameDef.pool.length));
+  }
+  if (gameDef.type === 'photo-spell' && gameDef.items) {
+    const n = 8;
+    game.items = pickItems(gameId, gameDef.items, Math.min(n, gameDef.items.length));
+  }
+  if ((gameDef.type === 'sort' || gameDef.type === 'swipe') && gameDef.items) {
+    const n = 10;
+    game.items = pickItems(gameId, gameDef.items, Math.min(n, gameDef.items.length));
+  }
+  S.game = game;
+
+  if (game.type === 'mcq')         S.maxScore = game.questions.length;
+  else if (game.type === 'sort' || game.type === 'swipe') S.maxScore = game.items.length;
+  else if (game.type === 'photo-spell') S.maxScore = game.items.length;
+  else if (game.type === 'timer-grid') {
+    S.maxScore = game.rounds.reduce((s, r) => s + r.correct.length, 0);
+  }
+
+  S.streak = 0;
+  document.getElementById('game-name-bar').textContent  = `${game.emoji} ${game.name}`;
+  document.getElementById('game-score-bar').textContent = `0/${S.maxScore}`;
+
+  showScreen('game');
+  renderCurrent();
+}
+
+// ────────────────── PHOTO-SPELL ────────────────
+
+const VKB_ROWS = [
+  ['A','Z','E','R','T','Y','U','I','O','P'],
+  ['Q','S','D','F','G','H','J','K','L','M'],
+  ['W','X','C','V','B','N','⌫'],
+  ['É','È','Ê','À','Â','Û','Ù','Ô','Î','Ï','Ç','-']
+];
+
+function renderPhotoSpell() {
+  const g    = S.game;
+  const item = g.items[S.idx];
+  if (!item) { endGame(); return; }
+
+  S.hintCount  = 0;
+  S.psHintUsed = false;
+  S.psInput    = [];
+  S.psCursor   = 0;
+
+  // Parse answer into words → letters; spaces become word-gap markers
+  const words  = item.answer.toUpperCase().split(' ');
+  const boxes  = []; // {type:'letter'|'gap'|'special', char, filled}
+  words.forEach((w, wi) => {
+    [...w].forEach(ch => boxes.push({ type: ch === '-' ? 'special' : 'letter', char: ch, filled: false }));
+    if (wi < words.length - 1) boxes.push({ type: 'gap' });
+  });
+  S.psBoxes = boxes;
+
+  const letterBoxes = boxes.filter(b => b.type === 'letter');
+  S.psInput = Array(letterBoxes.length).fill('');
+  S.psCursor = 0;
+
+  updateProgressBar(S.idx, g.items.length);
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const body = document.getElementById('game-body');
+  body.innerHTML = `
+    <div class="q-num">Palabra ${S.idx+1} / ${g.items.length}</div>
+    <div class="ps-photo">${item.emoji}</div>
+    <div class="ps-boxes-wrap" id="ps-boxes">${renderBoxesHTML(boxes)}</div>
+    <div class="ps-hint-area" id="ps-hint"></div>
+    <div class="ps-controls">
+      <button class="ps-hint-btn" id="ps-hint-btn" onclick="psHint()">💡 Pista (${3 - S.hintCount} restantes)</button>
+      <button class="ps-validate-btn" id="ps-validate-btn" onclick="psValidate()">Comprobar ✓</button>
+    </div>
+    <div class="vkb" id="vkb">${renderVKB()}</div>`;
+
+  updatePsBoxes();
+}
+
+function renderBoxesHTML(boxes) {
+  return boxes.map((b, i) => {
+    if (b.type === 'gap')     return `<div class="ps-word-gap"></div>`;
+    if (b.type === 'special') return `<div class="ps-separator">${b.char}</div>`;
+    return `<div class="ps-box" id="psb-${i}"></div>`;
+  }).join('');
+}
+
+function renderVKB() {
+  return VKB_ROWS.map(row =>
+    `<div class="vkb-row">${row.map(k =>
+      k === '⌫'
+        ? `<button class="vkb-key vkb-del" onclick="psKey('⌫')">⌫</button>`
+        : `<button class="vkb-key${/[ÉÈÊÀÂÛÙÔÎÏÇ]/.test(k)?' vkb-acc':''}" onclick="psKey('${k}')">${k}</button>`
+    ).join('')}</div>`
+  ).join('');
+}
+
+function updatePsBoxes() {
+  let li = 0; // letter index
+  S.psBoxes.forEach((b, i) => {
+    if (b.type !== 'letter') return;
+    const el = document.getElementById(`psb-${i}`);
+    if (!el) { li++; return; }
+    el.textContent = S.psInput[li] || '';
+    el.className   = 'ps-box' + (li === S.psCursor ? ' active' : '');
+    li++;
+  });
+}
+
+function psKey(k) {
+  const letterCount = S.psBoxes.filter(b => b.type === 'letter').length;
+  if (k === '⌫') {
+    if (S.psCursor > 0) {
+      S.psCursor--;
+      S.psInput[S.psCursor] = '';
+    }
+  } else {
+    if (S.psCursor < letterCount) {
+      S.psInput[S.psCursor] = k;
+      if (S.psCursor < letterCount - 1) S.psCursor++;
+    }
+  }
+  updatePsBoxes();
+}
+
+function psHint() {
+  const item = S.game.items[S.idx];
+  if (S.hintCount >= item.hints.length) return;
+  const hintEl = document.getElementById('ps-hint');
+  hintEl.textContent = `💡 ${item.hints[S.hintCount]}`;
+  hintEl.classList.add('visible');
+  S.hintCount++;
+  // 3rd hint reveals first missing letter
+  if (S.hintCount >= 3) {
+    const letters = item.answer.toUpperCase().replace(/ /g,'').replace(/-/g,'').split('');
+    const missing = S.psInput.findIndex(c => !c);
+    if (missing !== -1) {
+      S.psInput[missing] = letters[missing];
+      if (S.psCursor <= missing) S.psCursor = missing + 1;
+      updatePsBoxes();
+      // colour that box gold
+      let li = 0;
+      S.psBoxes.forEach((b, i) => {
+        if (b.type !== 'letter') return;
+        if (li === missing) {
+          const el = document.getElementById(`psb-${i}`);
+          if (el) el.classList.add('revealed');
+        }
+        li++;
+      });
+    }
+  }
+  const btn = document.getElementById('ps-hint-btn');
+  if (btn) {
+    const left = Math.max(0, item.hints.length - S.hintCount);
+    btn.textContent = left ? `💡 Pista (${left} restantes)` : '💡 Sin más pistas';
+    if (!left) btn.disabled = true;
+  }
+  playSound('ok');
+}
+
+function psValidate() {
+  const item    = S.game.items[S.idx];
+  const correct = item.answer.toUpperCase().replace(/ /g,'').replace(/-/g,'').split('');
+  const given   = S.psInput.slice(0, correct.length);
+  const isOk    = given.join('') === correct.join('') && !given.includes('');
+
+  // colour boxes
+  let li = 0;
+  S.psBoxes.forEach((b, i) => {
+    if (b.type !== 'letter') return;
+    const el = document.getElementById(`psb-${i}`);
+    if (el && !el.classList.contains('revealed')) {
+      el.classList.add(isOk ? 'correct' : (given[li] === correct[li] ? 'correct' : 'wrong'));
+    }
+    li++;
+  });
+
+  if (isOk) { S.score++; playSound('ok'); }
+  else {
+    // show full correct answer
+    let li2 = 0;
+    S.psBoxes.forEach((b, i) => {
+      if (b.type !== 'letter') return;
+      const el = document.getElementById(`psb-${i}`);
+      if (el) { el.textContent = correct[li2]; }
+      li2++;
+    });
+    playSound('err');
+  }
+
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+  document.getElementById('ps-validate-btn').disabled = true;
+  document.querySelectorAll('.vkb-key').forEach(k => k.style.pointerEvents = 'none');
+  document.getElementById('ps-hint-btn').disabled = true;
+
+  const nextStep = () => {
+    S.idx++;
+    if (S.idx >= S.game.items.length) endGame();
+    else renderPhotoSpell();
+  };
+
+  if (isOk) {
+    setTimeout(nextStep, 1400);
+  } else {
+    setTimeout(() => {
+        showErrorFb(`Mince ! L'orthographe correcte était :<br><strong style="font-size:1.4em;letter-spacing:1px;color:var(--gold)">${item.answer.toUpperCase()}</strong>`, nextStep);
+    }, 800);
+  }
+}
+
+function exitGame() {
+  clearTimer();
+  showScreen('menu');
+}
+
+function clearTimer() {
+  if (S.timerInt) { clearInterval(S.timerInt); S.timerInt = null; }
+}
+
+function updateProgressBar(cur, total) {
+  document.getElementById('progress-fill').style.width = `${(cur / total) * 100}%`;
+}
+
+function renderCurrent() {
+  const g = S.game;
+  if      (g.type === 'mcq')         renderMCQ();
+  else if (g.type === 'sort')        renderSort();
+  else if (g.type === 'swipe')       renderSwipe();
+  else if (g.type === 'timer-grid')  renderGrid();
+  else if (g.type === 'photo-spell') renderPhotoSpell();
+}
+
+// ────────────────── MCQ ────────────────────────
+
+function renderMCQ() {
+  const g = S.game;
+  const q = g.questions[S.idx];
+  if (!q) { endGame(); return; }
+
+  S.curQ      = q;
+  S.shuffOpts = shuffleArr([...q.options]);
+  updateProgressBar(S.idx, g.questions.length);
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const body = document.getElementById('game-body');
+  const hideEmoji = S.gameId === 'tabu';
+  body.innerHTML = `
+    <div class="q-num">Pregunta ${S.idx+1} / ${g.questions.length}</div>
+    <div class="q-emoji" id="q-emoji-reveal" style="${hideEmoji ? 'visibility:hidden' : ''}">${q.emoji || ''}</div>
+    <div class="q-text">${q.text}${q.word ? `<br><span class="q-word">${q.word}</span>` : ''}</div>
+    ${q.hint ? `<div class="hint-box">${q.hint.replace(/\n/g,'<br>')}</div>` : ''}
+    <div class="options-grid">
+      ${S.shuffOpts.map((opt, i) => `<button class="opt-btn fade-in" onclick="selectOpt(${i})">${opt}</button>`).join('')}
+    </div>`;
+}
+
+function selectOpt(i) {
+  const chosen  = S.shuffOpts[i];
+  const correct = S.curQ.answer;
+  const isOk    = chosen === correct;
+
+  document.querySelectorAll('.opt-btn').forEach((b, bi) => {
+    b.classList.add('disabled');
+    if (S.shuffOpts[bi] === correct) b.classList.add('correct');
+  });
+  if (!isOk) document.querySelectorAll('.opt-btn')[i].classList.add('wrong');
+
+  if (isOk) { S.score++; playSound('ok'); }
+  else       { playSound('err'); }
+  checkStreak(isOk);
+
+  // Reveal emoji after answer for tabu game
+  if (S.gameId === 'tabu') {
+    const emojiEl = document.getElementById('q-emoji-reveal');
+    if (emojiEl) emojiEl.style.visibility = 'visible';
+  }
+
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const nextStep = () => {
+    S.idx++;
+    if (S.idx >= S.game.questions.length) endGame();
+    else renderCurrent();
+  };
+
+  if (isOk) {
+    setTimeout(nextStep, 1100);
+  } else {
+    setTimeout(() => {
+        const expl = S.curQ.hint ? `<div style="font-size:0.85em;color:var(--muted);margin-top:.4rem">${S.curQ.hint}</div>` : '';
+        showErrorFb(`La bonne réponse était :<br><strong style="font-size:1.15em;color:#fff">${correct}</strong>${expl}`, nextStep);
+    }, 600);
+  }
+}
+
+// ────────────────── SORT ───────────────────────
+
+function renderSort() {
+  const g    = S.game;
+  const item = g.items[S.idx];
+  if (!item) { endGame(); return; }
+
+  updateProgressBar(S.idx, g.items.length);
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const body = document.getElementById('game-body');
+  body.innerHTML = `
+    <div class="q-num">Tarjeta ${S.idx+1} / ${g.items.length}</div>
+    <div class="sort-card fade-in">
+      <span class="sc-emoji">${item.emoji}</span>
+      <div>${item.text}</div>
+      <div class="sc-note">${item.note}</div>
+    </div>
+    <div style="text-align:center;color:var(--muted);font-size:.83rem">¿A qué categoría pertenece?</div>
+    <div class="sort-buttons">
+      <button class="sort-btn cat0 fade-in" onclick="selectSort(0)">📖<br><span style="font-size:.78rem">${g.cats[0]}</span></button>
+      <button class="sort-btn cat1 fade-in" onclick="selectSort(1)">🎬<br><span style="font-size:.78rem">${g.cats[1]}</span></button>
+    </div>`;
+}
+
+function selectSort(chosen) {
+  const item   = S.game.items[S.idx];
+  const isOk   = chosen === item.cat;
+  const btns   = document.querySelectorAll('.sort-btn');
+
+  btns.forEach(b => { b.style.pointerEvents = 'none'; b.style.opacity = '.4'; });
+  btns[item.cat].style.opacity = '1';
+  btns[item.cat].classList.add('sb-ok');
+
+  if (isOk)  { S.score++; playSound('ok'); }
+  else        { btns[chosen].style.opacity = '1'; btns[chosen].classList.add('sb-err'); playSound('err'); }
+  checkStreak(isOk);
+
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const nextStep = () => {
+    S.idx++;
+    if (S.idx >= S.game.items.length) endGame();
+    else renderCurrent();
+  };
+
+  if (isOk) {
+    setTimeout(nextStep, 900);
+  } else {
+    setTimeout(() => {
+        showErrorFb(`La catégorie correcte était :<br><strong style="font-size:1.15em;color:#fff">${S.game.cats[item.cat]}</strong><br><span style="font-size:.85rem;color:var(--muted)">${item.note || ''}</span>`, nextStep);
+    }, 600);
+  }
+}
+
+// ────────────────── SWIPE ──────────────────────
+
+function renderSwipe() {
+  const g    = S.game;
+  const item = g.items[S.idx];
+  if (!item) { endGame(); return; }
+
+  updateProgressBar(S.idx, g.items.length);
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const body = document.getElementById('game-body');
+  body.innerHTML = `
+    <div class="q-num">Frase ${S.idx+1} / ${g.items.length}</div>
+    <div style="text-align:center;color:var(--muted);font-size:.83rem">¿Crítica positiva o negativa?</div>
+    <div class="swipe-card fade-in" id="sw-card">"${item.text}"</div>
+    <div class="swipe-note">${item.note}</div>
+    <div class="swipe-buttons">
+      <button class="swipe-btn neg" onclick="selectSwipe(0)">👎<span>Négative</span></button>
+      <button class="swipe-btn pos" onclick="selectSwipe(1)">👍<span>Positive</span></button>
+    </div>`;
+}
+
+function selectSwipe(chosen) {
+  const item = S.game.items[S.idx];
+  const isOk = chosen === item.cat;
+  const card = document.getElementById('sw-card');
+
+  document.querySelectorAll('.swipe-btn').forEach(b => b.style.pointerEvents = 'none');
+
+  if (isOk) { card.style.borderColor = 'var(--ok)';  card.style.background = 'rgba(46,204,113,.14)'; S.score++; playSound('ok'); }
+  else       { card.style.borderColor = 'var(--err)'; card.style.background = 'rgba(231,76,60,.14)';  playSound('err'); }
+  checkStreak(isOk);
+
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const nextStep = () => {
+    S.idx++;
+    if (S.idx >= S.game.items.length) endGame();
+    else renderCurrent();
+  };
+
+  if (isOk) {
+    setTimeout(nextStep, 900);
+  } else {
+    setTimeout(() => {
+        showErrorFb(`Cette expression est :<br><strong style="font-size:1.15em;color:#fff">${item.cat === 1 ? 'Positive 👍' : 'Négative 👎'}</strong><br><span style="font-size:.85rem;color:var(--muted)">${item.note || ''}</span>`, nextStep);
+    }, 600);
+  }
+}
+
+// ────────────────── TIMER GRID ─────────────────
+
+function renderGrid() {
+  clearTimer();
+  const g     = S.game;
+  const round = g.rounds[S.round];
+  if (!round) { endGame(); return; }
+
+  S.selIdx   = new Set();
+  S.timerVal = g.timeLimit;
+
+  const shuffled = shuffleArr([...round.all]);
+  S.gridInfo = { round, shuffled };
+
+  updateProgressBar(S.round, g.rounds.length);
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+
+  const body = document.getElementById('game-body');
+  body.innerHTML = `
+    <div class="q-num">Habitación ${S.round+1} / ${g.rounds.length}</div>
+    <div class="q-text" style="text-align:center;font-size:1.3rem">${round.room}</div>
+    <div style="text-align:center;color:var(--muted);font-size:.82rem">Selecciona los objetos que pertenecen aquí</div>
+    <div class="timer-display" id="timer-disp">${g.timeLimit}</div>
+    <div class="grid-game" id="grid-game">
+      ${shuffled.map((item, i) =>
+        `<div class="grid-item fade-in" id="gi-${i}" onclick="toggleGrid(${i})">
+          <span class="gi-emoji">${round.emojis[item] || '📦'}</span>
+          ${item}
+        </div>`
+      ).join('')}
+    </div>
+    <button class="btn btn-primary" id="grid-submit-btn" onclick="submitGrid()">Validar ✓</button>`;
+
+  // start countdown
+  S.timerInt = setInterval(() => {
+    S.timerVal--;
+    const td = document.getElementById('timer-disp');
+    if (td) {
+      td.textContent = S.timerVal;
+      if (S.timerVal <= 5) td.classList.add('urgent');
+    }
+    if (S.timerVal <= 0) { clearTimer(); submitGrid(); }
+  }, 1000);
+}
+
+function toggleGrid(i) {
+  const el = document.getElementById(`gi-${i}`);
+  if (!el || el.classList.contains('correct') || el.classList.contains('wrong')) return;
+  if (S.selIdx.has(i)) { S.selIdx.delete(i); el.classList.remove('selected'); }
+  else                  { S.selIdx.add(i);    el.classList.add('selected'); }
+}
+
+function submitGrid() {
+  clearTimer();
+  const { round, shuffled } = S.gridInfo;
+  let pts = 0;
+  const total = round.correct.length;
+
+  shuffled.forEach((item, i) => {
+    const el      = document.getElementById(`gi-${i}`);
+    if (!el) return;
+    const isRight = round.correct.includes(item);
+    const isSel   = S.selIdx.has(i);
+    el.style.pointerEvents = 'none';
+    el.classList.remove('selected');
+
+    if (isRight && isSel)  { el.classList.add('correct'); pts++; }
+    else if (isRight)       { el.classList.add('missed'); }
+    else if (isSel)         { el.classList.add('wrong'); }
+  });
+
+  S.score += pts;
+  document.getElementById('game-score-bar').textContent = `${S.score}/${S.maxScore}`;
+  playSound(pts >= Math.ceil(total * .6) ? 'ok' : 'err');
+
+  const sb = document.getElementById('grid-submit-btn');
+  if (sb) { sb.textContent = `✓ ${pts}/${total} correctos`; sb.style.pointerEvents = 'none'; sb.style.opacity = '.65'; }
+
+  setTimeout(() => {
+    S.round++;
+    if (S.round >= S.game.rounds.length) endGame();
+    else renderGrid();
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  END GAME
+// ═══════════════════════════════════════════════════════
+
+function endGame() {
+  clearTimer();
+  const { score, maxScore, gameId } = S;
+  const pct = score / maxScore;
+
+  saveScore(gameId, score, maxScore);
+
+  let emoji, title, sub, fb;
+  if      (pct >= .9) { emoji='🏆'; title='Excellent !';     sub='Tu maîtrises ce thème !';          fb='Parfait ! Continue comme ça, tu es au top !'; }
+  else if (pct >= .7) { emoji='🎯'; title='Très bien !';     sub='Presque parfait !';                fb='Très bon résultat ! Encore un peu d\'entraînement et ce sera parfait.'; }
+  else if (pct >= .5) { emoji='👍'; title='Pas mal !';       sub='Continue à pratiquer !';           fb='Bon effort ! Révise un peu le vocabulaire et réessaie.'; }
+  else                { emoji='💪'; title='Courage !';       sub='Il faut encore pratiquer !';       fb='Ne t\'inquiète pas ! Relis les mots et réessaie, tu vas y arriver !'; }
+
+  const pctInt = Math.round(pct * 100);
+
+  document.getElementById('res-emoji').textContent = emoji;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-sub').textContent   = sub;
+  document.getElementById('res-score').textContent = `${score} / ${maxScore} pts`;
+  document.getElementById('res-pct').textContent   = `${pctInt}%`;
+  document.getElementById('res-fb').textContent    = fb;
+
+  showScreen('result');
+  // animate bar after paint
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bar = document.getElementById('res-bar');
+      if (bar) bar.style.width = `${pctInt}%`;
+    });
+  });
+
+  playSound(pct >= .7 ? 'win' : 'end');
+  if (pct >= .7) spawnConfetti();
+}
+
+function retryGame() { startGame(S.gameId); }
+
+// ═══════════════════════════════════════════════════════
+//  AUDIO (Web Audio API)
+// ═══════════════════════════════════════════════════════
+
+let _actx = null;
+function getCtx() {
+  if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+  return _actx;
+}
+
+function playSound(type) {
+  try {
+    const ctx  = getCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    const t = ctx.currentTime;
+
+    if (type === 'ok') {
+      gain.gain.setValueAtTime(.28, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .45);
+      osc.frequency.setValueAtTime(523, t);
+      osc.frequency.setValueAtTime(659, t + .1);
+      osc.frequency.setValueAtTime(784, t + .22);
+      osc.start(t); osc.stop(t + .5);
+    } else if (type === 'err') {
+      gain.gain.setValueAtTime(.22, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .35);
+      osc.frequency.setValueAtTime(300, t);
+      osc.frequency.setValueAtTime(200, t + .2);
+      osc.start(t); osc.stop(t + .4);
+    } else if (type === 'win') {
+      gain.gain.setValueAtTime(.28, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .9);
+      [523,659,784,1047].forEach((f, i) => osc.frequency.setValueAtTime(f, t + i * .15));
+      osc.start(t); osc.stop(t + 1);
+    } else if (type === 'end') {
+      gain.gain.setValueAtTime(.22, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .5);
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.setValueAtTime(370, t + .25);
+      osc.start(t); osc.stop(t + .6);
+    }
+  } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════
+
+function spawnConfetti() {
+  const cols = ['#0055A4','#EF4135','#FFD700','#2ECC71','#9B59B6','#FF6B6B','#00AAFF'];
+  for (let i = 0; i < 70; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.cssText = `left:${Math.random()*100}vw;background:${cols[Math.random()*cols.length|0]};animation-duration:${1.4+Math.random()*2}s;animation-delay:${Math.random()*.4}s;transform:rotate(${Math.random()*360}deg)`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 4500);
+    }, i * 18);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════
+
+function shuffleArr(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.random() * (i+1) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════
+refreshProgressUI();
+</script>
+</body>
+</html>
